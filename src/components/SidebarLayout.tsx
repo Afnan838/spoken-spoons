@@ -57,8 +57,8 @@ const SidebarLayout = ({ children }: { children: React.ReactNode }) => {
 
         {/* Nav */}
         <nav className="flex-1 space-y-1 px-3 pt-2">
-          {navItems.map(({ to, label, icon: Icon, adminOnly }) => {
-            if (adminOnly && !isAdmin()) return null;
+          {navItems.map(({ to, label, icon: Icon }) => {
+            const isActive = location.pathname === to || (to === "/dashboard" && location.pathname === "/");
             const isActive = location.pathname === to || (to === "/dashboard" && location.pathname === "/");
             return (
               <Link
