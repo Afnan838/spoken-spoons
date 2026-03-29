@@ -48,7 +48,7 @@ const SidebarLayout = ({ children }: { children: React.ReactNode }) => {
         {/* Logo */}
         <Link to="/dashboard" className="flex items-center gap-3 px-5 py-6">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary">
-            <ChefHat className="h-5 w-5 text-primary-foreground" />
+            <UtensilsCrossed className="h-5 w-5 text-primary-foreground" />
           </div>
           <div>
             <p className="font-display text-base font-bold text-foreground">Indian</p>
