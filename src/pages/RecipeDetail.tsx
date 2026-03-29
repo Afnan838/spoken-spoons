@@ -11,8 +11,18 @@ import { toast } from "sonner";
 
 const RecipeDetail = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const recipes = getLocalRecipes();
   const recipe = recipes.find((r) => r.id === id);
+  const adminAccess = isAdmin();
+
+  const handleDelete = () => {
+    if (recipe?.id) {
+      deleteLocalRecipe(recipe.id);
+      toast.success("Recipe deleted");
+      navigate("/recipes");
+    }
+  };
 
   if (!recipe) {
     return (
