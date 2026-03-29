@@ -1,10 +1,10 @@
-import { useState, useMemo } from "react";
 import { useParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Clock, Users, MapPin, ChefHat, Utensils, ArrowLeft } from "lucide-react";
+import { Clock, Users, MapPin, ChefHat, Utensils, ArrowLeft, Download } from "lucide-react";
 import SidebarLayout from "@/components/SidebarLayout";
 import { Button } from "@/components/ui/button";
 import { getLocalRecipes } from "@/lib/api";
+import { exportSingleRecipePdf } from "@/lib/pdfExport";
 
 const RecipeDetail = () => {
   const { id } = useParams();
