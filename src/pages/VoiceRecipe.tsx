@@ -29,6 +29,7 @@ const VoiceRecipe = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [selectedLang, setSelectedLang] = useState("en-IN");
   const recognitionRef = useRef<any>(null);
 
   const startRecording = useCallback(() => {
