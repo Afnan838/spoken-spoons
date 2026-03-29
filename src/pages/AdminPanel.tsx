@@ -197,7 +197,7 @@ const AdminPanel = () => {
                       <p className="font-semibold text-sm">{label}</p>
                       <p className="text-xs text-muted-foreground mt-0.5">{desc}</p>
                     </div>
-                    <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">Designed</span>
+                    <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-400">Implemented</span>
                   </motion.div>
                 ))}
               </div>
