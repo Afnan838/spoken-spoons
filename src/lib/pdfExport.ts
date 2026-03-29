@@ -1,11 +1,26 @@
 import jsPDF from "jspdf";
 import type { RecipeData } from "@/lib/api";
 
-const ORANGE = [200, 40, 40] as const;
+const BRAND = [200, 40, 40] as const;
 const DARK = [30, 30, 30] as const;
 const GRAY = [100, 100, 100] as const;
 const LIGHT_GRAY = [150, 150, 150] as const;
 const BODY = [60, 60, 60] as const;
+
+async function loadImageAsBase64(url: string): Promise<string | null> {
+  try {
+    const response = await fetch(url);
+    const blob = await response.blob();
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(blob);
+    });
+  } catch {
+    return null;
+  }
+}
 
 function drawDivider(doc: jsPDF, y: number, margin: number, pageWidth: number) {
   doc.setDrawColor(200, 200, 200);
