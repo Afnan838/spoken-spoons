@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mic, Square, Loader2, ChefHat, Clock, Users, MapPin, Globe } from "lucide-react";
+import { Mic, Square, Loader2, ChefHat, Clock, Users, MapPin, Globe, Volume2, VolumeX } from "lucide-react";
 import { toast } from "sonner";
 import SidebarLayout from "@/components/SidebarLayout";
 import RecipeConfirm from "@/components/RecipeConfirm";
