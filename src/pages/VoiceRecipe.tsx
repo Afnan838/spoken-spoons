@@ -91,8 +91,9 @@ const VoiceRecipe = () => {
 
     setIsProcessing(true);
     try {
+      const langLabel = LANGUAGES.find(l => l.code === selectedLang)?.label || "English";
       const { data, error } = await supabase.functions.invoke("structure-recipe", {
-        body: { transcript: transcript.trim() },
+        body: { transcript: transcript.trim(), language: langLabel },
       });
 
       if (error) throw error;
