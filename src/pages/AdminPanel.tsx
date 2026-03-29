@@ -234,7 +234,7 @@ Rules:
             <div className="section-card">
               <h3 className="font-display font-semibold text-lg mb-4">Demo Readiness Checklist</h3>
               <div className="space-y-2">
-                {demoChecklist.map(({ label, desc }, i) => (
+                {demoChecklist.map(({ label, desc, done }, i) => (
                   <motion.div
                     key={label}
                     initial={{ opacity: 0, x: -8 }}
