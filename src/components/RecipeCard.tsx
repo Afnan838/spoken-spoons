@@ -61,7 +61,7 @@ const RecipeCard = ({ recipe, onDelete, onExportPdf, onView, showActions = true 
               <Button variant="outline" size="sm" onClick={handleExport}>
                 <Download className="h-3.5 w-3.5" />
               </Button>
-              {onDelete && recipe.id && (
+              {adminAccess && onDelete && recipe.id && (
                 <Button variant="ghost" size="sm" onClick={() => onDelete(recipe.id!)}>
                   <Trash2 className="h-3.5 w-3.5 text-destructive" />
                 </Button>

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { REGIONS, saveLocalRecipe } from "@/lib/api";
+import { getUser, isAdmin } from "@/lib/auth";
 
 const CreateRecipe = () => {
   const navigate = useNavigate();

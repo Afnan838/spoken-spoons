@@ -42,9 +42,16 @@ const RecipeDetail = () => {
           <Button asChild variant="ghost">
             <Link to="/recipes"><ArrowLeft className="h-4 w-4 mr-2" /> Back</Link>
           </Button>
-          <Button variant="outline" onClick={() => exportSingleRecipePdf(recipe)} className="border-primary/30 hover:bg-primary/10">
-            <Download className="h-4 w-4 mr-2" /> Export PDF
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => exportSingleRecipePdf(recipe)} className="border-primary/30 hover:bg-primary/10">
+              <Download className="h-4 w-4 mr-2" /> Export PDF
+            </Button>
+            {adminAccess && (
+              <Button variant="outline" onClick={handleDelete} className="border-destructive/30 hover:bg-destructive/10 text-destructive">
+                <Trash2 className="h-4 w-4 mr-2" /> Delete
+              </Button>
+            )}
+          </div>
         </div>
 
         {/* Hero */}
