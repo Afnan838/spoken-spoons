@@ -1,12 +1,14 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import Index from "./pages/Index";
+import Dashboard from "./pages/Dashboard";
+import CreateRecipe from "./pages/CreateRecipe";
+import MyRecipes from "./pages/MyRecipes";
 import VoiceRecipe from "./pages/VoiceRecipe";
-import Recipes from "./pages/Recipes";
-import AdminDashboard from "./pages/AdminDashboard";
+import ExportPage from "./pages/ExportPage";
+import RecipeDetail from "./pages/RecipeDetail";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -18,10 +20,13 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Index />} />
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/create" element={<CreateRecipe />} />
+          <Route path="/recipes" element={<MyRecipes />} />
           <Route path="/voice-recipe" element={<VoiceRecipe />} />
-          <Route path="/recipes" element={<Recipes />} />
-          <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/export" element={<ExportPage />} />
+          <Route path="/recipe/:id" element={<RecipeDetail />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
