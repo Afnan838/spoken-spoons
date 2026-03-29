@@ -76,7 +76,7 @@ const VoiceRecipe = () => {
     setRecipe(null);
     setShowConfirm(false);
     setTranscript("");
-  }, []);
+  }, [selectedLang]);
 
   const stopRecording = useCallback(() => {
     recognitionRef.current?.stop();
