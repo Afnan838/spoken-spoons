@@ -56,7 +56,8 @@ const SidebarLayout = ({ children }: { children: React.ReactNode }) => {
 
         {/* Nav */}
         <nav className="flex-1 space-y-1 px-3 pt-2">
-          {navItems.map(({ to, label, icon: Icon }) => {
+          {navItems.map(({ to, label, icon: Icon, adminOnly }) => {
+            if (adminOnly && !isAdmin()) return null;
             const isActive = location.pathname === to || (to === "/dashboard" && location.pathname === "/");
             return (
               <Link
@@ -69,15 +70,6 @@ const SidebarLayout = ({ children }: { children: React.ReactNode }) => {
               </Link>
             );
           })}
-          {isAdmin() && (
-            <Link
-              to="/admin"
-              className={`sidebar-item ${location.pathname === "/admin" ? "sidebar-item-active" : "sidebar-item-inactive"}`}
-            >
-              <Shield className="h-4.5 w-4.5" />
-              Admin Panel
-            </Link>
-          )}
         </nav>
 
         {/* Footer */}
