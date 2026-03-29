@@ -25,9 +25,14 @@ const RecipeDetail = () => {
   return (
     <SidebarLayout>
       <div className="max-w-4xl mx-auto">
-        <Button asChild variant="ghost" className="mb-4">
-          <Link to="/recipes"><ArrowLeft className="h-4 w-4 mr-2" /> Back</Link>
-        </Button>
+        <div className="flex items-center justify-between mb-4">
+          <Button asChild variant="ghost">
+            <Link to="/recipes"><ArrowLeft className="h-4 w-4 mr-2" /> Back</Link>
+          </Button>
+          <Button variant="outline" onClick={() => exportSingleRecipePdf(recipe)} className="border-primary/30 hover:bg-primary/10">
+            <Download className="h-4 w-4 mr-2" /> Export PDF
+          </Button>
+        </div>
 
         {/* Hero */}
         {recipe.image && (
