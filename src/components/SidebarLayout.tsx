@@ -48,6 +48,15 @@ const SidebarLayout = ({ children }: { children: React.ReactNode }) => {
               </Link>
             );
           })}
+          {isAdmin() && (
+            <Link
+              to="/admin"
+              className={`sidebar-item ${location.pathname === "/admin" ? "sidebar-item-active" : "sidebar-item-inactive"}`}
+            >
+              <Shield className="h-4.5 w-4.5" />
+              Admin Panel
+            </Link>
+          )}
         </nav>
 
         {/* Footer */}
