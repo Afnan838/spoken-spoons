@@ -28,9 +28,29 @@ const VoiceRecipe = () => {
   const [recipe, setRecipe] = useState<Partial<RecipeData> | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [selectedLang, setSelectedLang] = useState("en-IN");
   const recognitionRef = useRef<any>(null);
+
+  const speakRecipe = useCallback((recipeData: Partial<RecipeData>) => {
+    if (!("speechSynthesis" in window)) return;
+    window.speechSynthesis.cancel();
+    const text = `Here is your recipe for ${recipeData.title}. ${recipeData.description || ""} You will need ${recipeData.ingredients?.length || 0} ingredients. ${recipeData.ingredients?.join(", ")}. The cooking steps are: ${recipeData.steps?.map((s, i) => `Step ${i + 1}: ${s}`).join(". ")}. Total cooking time is ${recipeData.time || "not specified"}. This serves ${recipeData.servings || "4"}. This dish originates from ${recipeData.region || "India"}.`;
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = "en-IN";
+    utterance.rate = 0.9;
+    utterance.pitch = 1;
+    utterance.onstart = () => setIsSpeaking(true);
+    utterance.onend = () => setIsSpeaking(false);
+    utterance.onerror = () => setIsSpeaking(false);
+    speechSynthesis.speak(utterance);
+  }, []);
+
+  const stopSpeaking = useCallback(() => {
+    window.speechSynthesis?.cancel();
+    setIsSpeaking(false);
+  }, []);
 
   const startRecording = useCallback(() => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
