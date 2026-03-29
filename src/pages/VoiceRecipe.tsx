@@ -1,87 +1,109 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Wifi, WifiOff, Volume2, Mic, Square } from "lucide-react";
+import { Mic, Square, Loader2, ChefHat, Clock, Users, MapPin } from "lucide-react";
 import { toast } from "sonner";
 import SidebarLayout from "@/components/SidebarLayout";
-import AudioRecorder from "@/components/AudioRecorder";
-import RecipeLiveView from "@/components/RecipeLiveView";
 import RecipeConfirm from "@/components/RecipeConfirm";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useWebSocket, type WebSocketStatus } from "@/hooks/useWebSocket";
-import { WS_AUDIO_URL, type RecipeData, saveLocalRecipe } from "@/lib/api";
-
-const statusLabels: Record<WebSocketStatus, string> = {
-  idle: "Disconnected",
-  connecting: "Connecting...",
-  connected: "Connected",
-  error: "Connection Error",
-  disconnected: "Disconnected",
-};
-
-const statusColors: Record<WebSocketStatus, string> = {
-  idle: "bg-muted-foreground",
-  connecting: "bg-yellow-500",
-  connected: "bg-emerald-500",
-  error: "bg-destructive",
-  disconnected: "bg-muted-foreground",
-};
+import { Textarea } from "@/components/ui/textarea";
+import { type RecipeData, saveLocalRecipe } from "@/lib/api";
+import { supabase } from "@/integrations/supabase/client";
 
 const VoiceRecipe = () => {
   const [transcript, setTranscript] = useState("");
-  const [recipe, setRecipe] = useState<Partial<RecipeData>>({});
+  const [recipe, setRecipe] = useState<Partial<RecipeData> | null>(null);
+  const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [ttsAudioUrl, setTtsAudioUrl] = useState<string | null>(null);
   const [showConfirm, setShowConfirm] = useState(false);
+  const recognitionRef = useRef<any>(null);
 
-  const handleMessage = useCallback((data: any) => {
-    switch (data.type) {
-      case "transcript":
-        setTranscript((prev) => prev + " " + data.data);
-        break;
-      case "partial_recipe":
-        setRecipe(data.data);
-        break;
-      case "final_recipe":
-        setRecipe(data.data);
-        setIsProcessing(false);
-        setShowConfirm(true);
-        break;
-      case "tts_audio":
-        setTtsAudioUrl(data.data);
-        break;
-      case "error":
-        setIsProcessing(false);
-        toast.error(data.data || "Processing error");
-        break;
+  const startRecording = useCallback(() => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      toast.error("Speech Recognition not supported in this browser. Try Chrome.");
+      return;
     }
+
+    const recognition = new SpeechRecognition();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = "en-IN";
+
+    let finalTranscript = "";
+
+    recognition.onresult = (event: any) => {
+      let interim = "";
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const t = event.results[i][0].transcript;
+        if (event.results[i].isFinal) {
+          finalTranscript += t + " ";
+        } else {
+          interim = t;
+        }
+      }
+      setTranscript(finalTranscript + interim);
+    };
+
+    recognition.onerror = (event: any) => {
+      if (event.error !== "no-speech") {
+        toast.error(`Mic error: ${event.error}`);
+      }
+      setIsRecording(false);
+    };
+
+    recognition.onend = () => {
+      setIsRecording(false);
+    };
+
+    recognitionRef.current = recognition;
+    recognition.start();
+    setIsRecording(true);
+    setRecipe(null);
+    setShowConfirm(false);
+    setTranscript("");
   }, []);
 
-  const { status, connect, disconnect, send } = useWebSocket({
-    url: WS_AUDIO_URL,
-    onMessage: handleMessage,
-  });
+  const stopRecording = useCallback(() => {
+    recognitionRef.current?.stop();
+    setIsRecording(false);
+  }, []);
 
-  const handleAudioChunk = useCallback((chunk: Blob) => { send(chunk); }, [send]);
+  const processWithAI = useCallback(async () => {
+    if (!transcript.trim()) {
+      toast.error("Please record or type a recipe description first.");
+      return;
+    }
 
-  const handleRecordingStart = useCallback(() => {
-    setTranscript("");
-    setRecipe({});
     setIsProcessing(true);
-    setTtsAudioUrl(null);
-    setShowConfirm(false);
-    if (status !== "connected") connect();
-  }, [status, connect]);
+    try {
+      const { data, error } = await supabase.functions.invoke("structure-recipe", {
+        body: { transcript: transcript.trim() },
+      });
 
-  const playTtsAudio = useCallback(() => {
-    if (ttsAudioUrl) { const audio = new Audio(ttsAudioUrl); audio.play(); }
-  }, [ttsAudioUrl]);
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      const structured = data.recipe;
+      setRecipe({
+        ...structured,
+        id: crypto.randomUUID(),
+        createdAt: new Date().toISOString(),
+      });
+      setShowConfirm(true);
+      toast.success("Recipe structured by AI!");
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || "Failed to process recipe with AI");
+    } finally {
+      setIsProcessing(false);
+    }
+  }, [transcript]);
 
   const handleConfirmSave = useCallback(async (confirmedRecipe: RecipeData) => {
     saveLocalRecipe(confirmedRecipe);
     toast.success("Recipe saved!");
     setShowConfirm(false);
-    setRecipe({});
+    setRecipe(null);
     setTranscript("");
   }, []);
 
@@ -90,25 +112,11 @@ const VoiceRecipe = () => {
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-display font-bold">Voice Recipe Capture</h1>
-          <p className="text-sm text-muted-foreground">Speak your recipe naturally — AI structures it in real time</p>
-        </div>
-
-        {/* Connection Status */}
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-sm">
-            <span className={`h-2 w-2 rounded-full ${statusColors[status]}`} />
-            <span className="text-muted-foreground">{statusLabels[status]}</span>
-            {status === "connected" ? (
-              <WifiOff className="h-4 w-4 cursor-pointer text-muted-foreground hover:text-foreground" onClick={disconnect} />
-            ) : (
-              <Wifi className="h-4 w-4 cursor-pointer text-muted-foreground hover:text-foreground" onClick={connect} />
-            )}
-          </div>
-          <p className="text-xs text-muted-foreground">WebSocket: {WS_AUDIO_URL}</p>
+          <p className="text-sm text-muted-foreground">Speak or type your recipe — AI structures it with ingredients, steps & timing</p>
         </div>
 
         <AnimatePresence mode="wait">
-          {showConfirm && recipe.title ? (
+          {showConfirm && recipe?.title ? (
             <RecipeConfirm
               key="confirm"
               recipe={recipe as RecipeData}
@@ -117,39 +125,172 @@ const VoiceRecipe = () => {
             />
           ) : (
             <motion.div key="capture" className="grid gap-6 lg:grid-cols-2">
+              {/* Left: Input */}
               <div className="space-y-4">
+                {/* Mic button */}
                 <div className="section-card flex flex-col items-center py-10">
-                  <AudioRecorder onAudioChunk={handleAudioChunk} onRecordingStart={handleRecordingStart} />
+                  <div className="relative">
+                    {isRecording && (
+                      <>
+                        <motion.div
+                          className="absolute inset-0 rounded-full bg-destructive/20"
+                          animate={{ scale: [1, 1.6, 1], opacity: [0.4, 0, 0.4] }}
+                          transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+                        />
+                        <motion.div
+                          className="absolute inset-0 rounded-full bg-destructive/10"
+                          animate={{ scale: [1, 2, 1], opacity: [0.3, 0, 0.3] }}
+                          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut", delay: 0.3 }}
+                        />
+                      </>
+                    )}
+                    <Button
+                      size="lg"
+                      variant={isRecording ? "destructive" : "default"}
+                      className={`relative z-10 h-20 w-20 rounded-full ${
+                        isRecording ? "" : "bg-primary hover:bg-primary/90 glow-orange"
+                      }`}
+                      onClick={isRecording ? stopRecording : startRecording}
+                      disabled={isProcessing}
+                    >
+                      {isRecording ? (
+                        <Square className="h-7 w-7 fill-current" />
+                      ) : (
+                        <Mic className="h-8 w-8" />
+                      )}
+                    </Button>
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-4">
+                    {isRecording ? (
+                      <span className="flex items-center gap-2">
+                        <span className="h-2 w-2 rounded-full bg-destructive animate-pulse-recording" />
+                        Listening... tap to stop
+                      </span>
+                    ) : (
+                      "Tap to start speaking your recipe"
+                    )}
+                  </p>
                 </div>
 
-                <AnimatePresence>
-                  {transcript && (
-                    <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="section-card">
-                      <h3 className="text-sm font-semibold text-muted-foreground mb-2">Live Transcript</h3>
-                      <p className="text-sm text-foreground/80 leading-relaxed">{transcript}</p>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                {/* Transcript area */}
+                <div className="section-card">
+                  <h3 className="text-sm font-semibold text-muted-foreground mb-2">Recipe Description</h3>
+                  <Textarea
+                    placeholder="Speak or type your recipe here... e.g., 'I want to make chicken biryani with basmati rice and yogurt marinade'"
+                    value={transcript}
+                    onChange={(e) => setTranscript(e.target.value)}
+                    className="min-h-[120px] bg-background border-border resize-none"
+                  />
+                </div>
 
-                {ttsAudioUrl && (
-                  <Button onClick={playTtsAudio} variant="outline" className="w-full border-primary/30 hover:bg-primary/10">
-                    <Volume2 className="h-4 w-4 mr-2" /> Play AI Response
-                  </Button>
-                )}
+                {/* Process button */}
+                <Button
+                  onClick={processWithAI}
+                  disabled={isProcessing || !transcript.trim()}
+                  className="w-full glow-orange"
+                >
+                  {isProcessing ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      AI is structuring your recipe...
+                    </>
+                  ) : (
+                    <>
+                      <ChefHat className="h-4 w-4 mr-2" />
+                      Structure Recipe with AI
+                    </>
+                  )}
+                </Button>
 
                 {/* Architecture Info */}
                 <div className="section-card text-xs text-muted-foreground space-y-2">
-                  <h3 className="font-semibold text-foreground text-sm">Architecture</h3>
-                  <p>1. <strong>Voice Input</strong> → MediaRecorder API captures audio chunks</p>
-                  <p>2. <strong>WebSocket Stream</strong> → Audio sent to FastAPI backend in real-time</p>
-                  <p>3. <strong>Speech-to-Text</strong> → Whisper / mock STT converts audio → transcript</p>
-                  <p>4. <strong>LLM Processing</strong> → System prompt extracts structured JSON</p>
-                  <p>5. <strong>Text-to-Speech</strong> → AI response played back as audio</p>
-                  <p>6. <strong>Structured Output</strong> → Recipe JSON displayed live on UI</p>
+                  <h3 className="font-semibold text-foreground text-sm">How it works</h3>
+                  <p>1. <strong>Voice Input</strong> → Browser Speech Recognition captures your words</p>
+                  <p>2. <strong>AI Processing</strong> → Transcript sent to AI for structured extraction</p>
+                  <p>3. <strong>Structured Output</strong> → Title, ingredients, steps, time, region parsed</p>
+                  <p>4. <strong>Review & Save</strong> → Edit the AI output before saving</p>
                 </div>
               </div>
 
-              <RecipeLiveView recipe={recipe} isStreaming={isProcessing} />
+              {/* Right: Preview */}
+              <div className="space-y-4">
+                {recipe ? (
+                  <motion.div
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="section-card space-y-5"
+                  >
+                    <h2 className="font-display text-xl font-bold">{recipe.title}</h2>
+                    {recipe.description && (
+                      <p className="text-sm text-muted-foreground">{recipe.description}</p>
+                    )}
+
+                    <div className="flex flex-wrap gap-3">
+                      {recipe.time && (
+                        <span className="flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+                          <Clock className="h-3 w-3" /> {recipe.time}
+                        </span>
+                      )}
+                      {recipe.servings && (
+                        <span className="flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1 text-xs font-medium text-muted-foreground">
+                          <Users className="h-3 w-3" /> {recipe.servings}
+                        </span>
+                      )}
+                      {recipe.region && (
+                        <span className="flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1 text-xs font-medium text-muted-foreground">
+                          <MapPin className="h-3 w-3" /> {recipe.region}
+                        </span>
+                      )}
+                    </div>
+
+                    {recipe.ingredients && recipe.ingredients.length > 0 && (
+                      <div>
+                        <h3 className="font-display font-semibold mb-2">Ingredients</h3>
+                        <ul className="space-y-1.5">
+                          {recipe.ingredients.map((ing, i) => (
+                            <li key={i} className="flex items-start gap-2 text-sm text-foreground/80">
+                              <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+                              {ing}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {recipe.steps && recipe.steps.length > 0 && (
+                      <div>
+                        <h3 className="font-display font-semibold mb-2">Step-by-Step Method</h3>
+                        <ol className="space-y-3">
+                          {recipe.steps.map((step, i) => (
+                            <motion.li
+                              key={i}
+                              initial={{ opacity: 0, x: -8 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              transition={{ delay: i * 0.05 }}
+                              className="flex gap-3 text-sm"
+                            >
+                              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+                                {i + 1}
+                              </span>
+                              <p className="text-foreground/80 leading-relaxed pt-0.5">{step}</p>
+                            </motion.li>
+                          ))}
+                        </ol>
+                      </div>
+                    )}
+                  </motion.div>
+                ) : (
+                  <div className="section-card flex flex-col items-center justify-center py-20 text-center">
+                    <ChefHat className="h-12 w-12 text-muted-foreground/30 mb-3" />
+                    <p className="text-muted-foreground text-sm">
+                      Your AI-structured recipe will appear here
+                    </p>
+                    <p className="text-muted-foreground/60 text-xs mt-1">
+                      Record or type a recipe description, then click "Structure Recipe"
+                    </p>
+                  </div>
+                )}
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
