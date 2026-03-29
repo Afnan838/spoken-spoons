@@ -260,13 +260,21 @@ const VoiceRecipe = () => {
                   )}
                 </Button>
 
+                {/* TTS Control */}
+                {isSpeaking && (
+                  <Button variant="outline" onClick={stopSpeaking} className="w-full border-destructive/30 text-destructive hover:bg-destructive/10">
+                    <VolumeX className="h-4 w-4 mr-2" /> Stop AI Voice
+                  </Button>
+                )}
+
                 {/* Architecture Info */}
                 <div className="section-card text-xs text-muted-foreground space-y-2">
                   <h3 className="font-semibold text-foreground text-sm">How it works</h3>
                   <p>1. <strong>Voice Input</strong> → Browser Speech Recognition captures your words</p>
                   <p>2. <strong>AI Processing</strong> → Transcript sent to AI for structured extraction</p>
                   <p>3. <strong>Structured Output</strong> → Title, ingredients, steps, time, region parsed</p>
-                  <p>4. <strong>Review & Save</strong> → Edit the AI output before saving</p>
+                  <p>4. <strong>AI Voice Response</strong> → Text-to-Speech reads the recipe back</p>
+                  <p>5. <strong>Review & Save</strong> → Edit the AI output before saving</p>
                 </div>
               </div>
 
