@@ -25,7 +25,7 @@ const ExportPage = () => {
   const selectAll = () => setSelectedIds(new Set(recipes.map((r) => r.id)));
   const deselectAll = () => setSelectedIds(new Set());
 
-  const handleExport = useCallback(() => {
+  const handleExport = useCallback(async () => {
     if (selectedIds.size === 0) { toast.error("Select at least one recipe"); return; }
     const selected = recipes.filter((r) => selectedIds.has(r.id));
     await exportRecipeBookPdf(selected, { addCover });
