@@ -1,13 +1,27 @@
 import { useState, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mic, Square, Loader2, ChefHat, Clock, Users, MapPin } from "lucide-react";
+import { Mic, Square, Loader2, ChefHat, Clock, Users, MapPin, Globe } from "lucide-react";
 import { toast } from "sonner";
 import SidebarLayout from "@/components/SidebarLayout";
 import RecipeConfirm from "@/components/RecipeConfirm";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { type RecipeData, saveLocalRecipe } from "@/lib/api";
 import { supabase } from "@/integrations/supabase/client";
+
+const LANGUAGES = [
+  { code: "en-IN", label: "English" },
+  { code: "hi-IN", label: "Hindi (हिन्दी)" },
+  { code: "kn-IN", label: "Kannada (ಕನ್ನಡ)" },
+  { code: "ta-IN", label: "Tamil (தமிழ்)" },
+  { code: "ml-IN", label: "Malayalam (മലയാളം)" },
+  { code: "te-IN", label: "Telugu (తెలుగు)" },
+  { code: "bn-IN", label: "Bengali (বাংলা)" },
+  { code: "mr-IN", label: "Marathi (मराठी)" },
+  { code: "gu-IN", label: "Gujarati (ગુજરાતી)" },
+  { code: "pa-IN", label: "Punjabi (ਪੰਜਾਬੀ)" },
+];
 
 const VoiceRecipe = () => {
   const [transcript, setTranscript] = useState("");
@@ -15,6 +29,7 @@ const VoiceRecipe = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [selectedLang, setSelectedLang] = useState("en-IN");
   const recognitionRef = useRef<any>(null);
 
   const startRecording = useCallback(() => {
@@ -27,7 +42,7 @@ const VoiceRecipe = () => {
     const recognition = new SpeechRecognition();
     recognition.continuous = true;
     recognition.interimResults = true;
-    recognition.lang = "en-IN";
+    recognition.lang = selectedLang;
 
     let finalTranscript = "";
 
@@ -61,7 +76,7 @@ const VoiceRecipe = () => {
     setRecipe(null);
     setShowConfirm(false);
     setTranscript("");
-  }, []);
+  }, [selectedLang]);
 
   const stopRecording = useCallback(() => {
     recognitionRef.current?.stop();
@@ -76,8 +91,9 @@ const VoiceRecipe = () => {
 
     setIsProcessing(true);
     try {
+      const langLabel = LANGUAGES.find(l => l.code === selectedLang)?.label || "English";
       const { data, error } = await supabase.functions.invoke("structure-recipe", {
-        body: { transcript: transcript.trim() },
+        body: { transcript: transcript.trim(), language: langLabel },
       });
 
       if (error) throw error;
@@ -127,6 +143,26 @@ const VoiceRecipe = () => {
             <motion.div key="capture" className="grid gap-6 lg:grid-cols-2">
               {/* Left: Input */}
               <div className="space-y-4">
+              {/* Language Selector */}
+                <div className="section-card">
+                  <div className="flex items-center gap-3">
+                    <Globe className="h-4 w-4 text-primary" />
+                    <span className="text-sm font-medium">Voice Language</span>
+                  </div>
+                  <Select value={selectedLang} onValueChange={setSelectedLang}>
+                    <SelectTrigger className="mt-2 bg-background border-border">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {LANGUAGES.map((lang) => (
+                        <SelectItem key={lang.code} value={lang.code}>
+                          {lang.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
                 {/* Mic button */}
                 <div className="section-card flex flex-col items-center py-10">
                   <div className="relative">

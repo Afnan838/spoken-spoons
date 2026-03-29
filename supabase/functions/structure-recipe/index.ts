@@ -9,13 +9,14 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { transcript } = await req.json();
+    const { transcript, language } = await req.json();
     if (!transcript || transcript.trim().length === 0) {
       return new Response(JSON.stringify({ error: "No transcript provided" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+    const lang = language || "English";
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
@@ -31,9 +32,9 @@ serve(async (req) => {
         messages: [
           {
             role: "system",
-            content: `You are an expert Indian recipe parser and culinary assistant. Given a voice transcript describing a recipe or food item, extract and return a structured recipe. Be thorough with steps and precise with timing.
+            content: `You are an expert Indian recipe parser and culinary assistant. The user may speak in ${lang} or mix languages. Given a voice transcript describing a recipe or food item, extract and return a structured recipe in English. Be thorough with steps and precise with timing. Understand regional Indian languages including Hindi, Kannada, Tamil, Malayalam, Telugu, Bengali, Marathi, Gujarati, and Punjabi.
 
-You MUST respond using the suggest_recipe tool.`
+You MUST respond using the suggest_recipe tool. Always output the structured recipe in English regardless of input language.`
           },
           { role: "user", content: transcript },
         ],
