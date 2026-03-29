@@ -4,6 +4,7 @@ import { Download, Trash2, Clock, MapPin, Eye } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import type { RecipeData } from "@/lib/api";
+import { isAdmin } from "@/lib/auth";
 
 interface RecipeCardProps {
   recipe: RecipeData;
@@ -14,6 +15,7 @@ interface RecipeCardProps {
 }
 
 const RecipeCard = ({ recipe, onDelete, onExportPdf, onView, showActions = true }: RecipeCardProps) => {
+  const adminAccess = isAdmin();
   const handleExport = useCallback(() => {
     if (recipe.id) onExportPdf?.(recipe.id);
   }, [recipe.id, onExportPdf]);
@@ -59,7 +61,7 @@ const RecipeCard = ({ recipe, onDelete, onExportPdf, onView, showActions = true 
               <Button variant="outline" size="sm" onClick={handleExport}>
                 <Download className="h-3.5 w-3.5" />
               </Button>
-              {onDelete && recipe.id && (
+              {adminAccess && onDelete && recipe.id && (
                 <Button variant="ghost" size="sm" onClick={() => onDelete(recipe.id!)}>
                   <Trash2 className="h-3.5 w-3.5 text-destructive" />
                 </Button>

@@ -1,15 +1,28 @@
-import { useParams, Link } from "react-router-dom";
+import { useState } from "react";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Clock, Users, MapPin, ChefHat, Utensils, ArrowLeft, Download } from "lucide-react";
+import { Clock, Users, MapPin, ChefHat, Utensils, ArrowLeft, Download, Pencil, Trash2 } from "lucide-react";
 import SidebarLayout from "@/components/SidebarLayout";
 import { Button } from "@/components/ui/button";
-import { getLocalRecipes } from "@/lib/api";
+import { getLocalRecipes, deleteLocalRecipe } from "@/lib/api";
 import { exportSingleRecipePdf } from "@/lib/pdfExport";
+import { getUser, isAdmin } from "@/lib/auth";
+import { toast } from "sonner";
 
 const RecipeDetail = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const recipes = getLocalRecipes();
   const recipe = recipes.find((r) => r.id === id);
+  const adminAccess = isAdmin();
+
+  const handleDelete = () => {
+    if (recipe?.id) {
+      deleteLocalRecipe(recipe.id);
+      toast.success("Recipe deleted");
+      navigate("/recipes");
+    }
+  };
 
   if (!recipe) {
     return (
@@ -29,9 +42,16 @@ const RecipeDetail = () => {
           <Button asChild variant="ghost">
             <Link to="/recipes"><ArrowLeft className="h-4 w-4 mr-2" /> Back</Link>
           </Button>
-          <Button variant="outline" onClick={() => exportSingleRecipePdf(recipe)} className="border-primary/30 hover:bg-primary/10">
-            <Download className="h-4 w-4 mr-2" /> Export PDF
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => exportSingleRecipePdf(recipe)} className="border-primary/30 hover:bg-primary/10">
+              <Download className="h-4 w-4 mr-2" /> Export PDF
+            </Button>
+            {adminAccess && (
+              <Button variant="outline" onClick={handleDelete} className="border-destructive/30 hover:bg-destructive/10 text-destructive">
+                <Trash2 className="h-4 w-4 mr-2" /> Delete
+              </Button>
+            )}
+          </div>
         </div>
 
         {/* Hero */}

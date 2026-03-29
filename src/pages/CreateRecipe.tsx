@@ -2,15 +2,18 @@ import { useState, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
-import { Eye, Save, Upload, X, Plus, Image as ImageIcon, Video } from "lucide-react";
+import { Eye, Save, Upload, X, Plus, Image as ImageIcon, Video, Shield } from "lucide-react";
 import SidebarLayout from "@/components/SidebarLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { REGIONS, saveLocalRecipe } from "@/lib/api";
+import { getUser, isAdmin } from "@/lib/auth";
 
 const CreateRecipe = () => {
   const navigate = useNavigate();
+  const user = getUser();
+  const adminAccess = user && isAdmin();
   const imageInputRef = useRef<HTMLInputElement>(null);
   const [title, setTitle] = useState("");
   const [region, setRegion] = useState("");
@@ -45,6 +48,19 @@ const CreateRecipe = () => {
     toast.success("Recipe saved!");
     navigate(`/recipe/${recipe.id}`);
   }, [title, description, region, time, servings, videoUrl, ingredients, steps, imagePreview, navigate]);
+
+  if (!adminAccess) {
+    return (
+      <SidebarLayout>
+        <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
+          <Shield className="h-16 w-16 text-destructive mb-4" />
+          <h2 className="text-2xl font-display font-bold mb-2">Admin Only</h2>
+          <p className="text-muted-foreground mb-4">Only admins can create recipes.</p>
+          <Button onClick={() => navigate("/dashboard")} className="glow-orange">Back to Dashboard</Button>
+        </div>
+      </SidebarLayout>
+    );
+  }
 
   return (
     <SidebarLayout>
