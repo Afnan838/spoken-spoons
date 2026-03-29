@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mic, Square, Loader2, ChefHat, Clock, Users, MapPin, Globe } from "lucide-react";
+import { Mic, Square, Loader2, ChefHat, Clock, Users, MapPin, Globe, Volume2, VolumeX } from "lucide-react";
 import { toast } from "sonner";
 import SidebarLayout from "@/components/SidebarLayout";
 import RecipeConfirm from "@/components/RecipeConfirm";
@@ -28,9 +28,29 @@ const VoiceRecipe = () => {
   const [recipe, setRecipe] = useState<Partial<RecipeData> | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [selectedLang, setSelectedLang] = useState("en-IN");
   const recognitionRef = useRef<any>(null);
+
+  const speakRecipe = useCallback((recipeData: Partial<RecipeData>) => {
+    if (!("speechSynthesis" in window)) return;
+    window.speechSynthesis.cancel();
+    const text = `Here is your recipe for ${recipeData.title}. ${recipeData.description || ""} You will need ${recipeData.ingredients?.length || 0} ingredients. ${recipeData.ingredients?.join(", ")}. The cooking steps are: ${recipeData.steps?.map((s, i) => `Step ${i + 1}: ${s}`).join(". ")}. Total cooking time is ${recipeData.time || "not specified"}. This serves ${recipeData.servings || "4"}. This dish originates from ${recipeData.region || "India"}.`;
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = "en-IN";
+    utterance.rate = 0.9;
+    utterance.pitch = 1;
+    utterance.onstart = () => setIsSpeaking(true);
+    utterance.onend = () => setIsSpeaking(false);
+    utterance.onerror = () => setIsSpeaking(false);
+    speechSynthesis.speak(utterance);
+  }, []);
+
+  const stopSpeaking = useCallback(() => {
+    window.speechSynthesis?.cancel();
+    setIsSpeaking(false);
+  }, []);
 
   const startRecording = useCallback(() => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -100,13 +120,15 @@ const VoiceRecipe = () => {
       if (data?.error) throw new Error(data.error);
 
       const structured = data.recipe;
-      setRecipe({
+      const fullRecipe = {
         ...structured,
         id: crypto.randomUUID(),
         createdAt: new Date().toISOString(),
-      });
+      };
+      setRecipe(fullRecipe);
       setShowConfirm(true);
       toast.success("Recipe structured by AI!");
+      speakRecipe(fullRecipe);
     } catch (err: any) {
       console.error(err);
       toast.error(err.message || "Failed to process recipe with AI");
@@ -238,13 +260,21 @@ const VoiceRecipe = () => {
                   )}
                 </Button>
 
+                {/* TTS Control */}
+                {isSpeaking && (
+                  <Button variant="outline" onClick={stopSpeaking} className="w-full border-destructive/30 text-destructive hover:bg-destructive/10">
+                    <VolumeX className="h-4 w-4 mr-2" /> Stop AI Voice
+                  </Button>
+                )}
+
                 {/* Architecture Info */}
                 <div className="section-card text-xs text-muted-foreground space-y-2">
                   <h3 className="font-semibold text-foreground text-sm">How it works</h3>
                   <p>1. <strong>Voice Input</strong> → Browser Speech Recognition captures your words</p>
                   <p>2. <strong>AI Processing</strong> → Transcript sent to AI for structured extraction</p>
                   <p>3. <strong>Structured Output</strong> → Title, ingredients, steps, time, region parsed</p>
-                  <p>4. <strong>Review & Save</strong> → Edit the AI output before saving</p>
+                  <p>4. <strong>AI Voice Response</strong> → Text-to-Speech reads the recipe back</p>
+                  <p>5. <strong>Review & Save</strong> → Edit the AI output before saving</p>
                 </div>
               </div>
 
@@ -256,7 +286,18 @@ const VoiceRecipe = () => {
                     animate={{ opacity: 1, y: 0 }}
                     className="section-card space-y-5"
                   >
-                    <h2 className="font-display text-xl font-bold">{recipe.title}</h2>
+                    <div className="flex items-center justify-between">
+                      <h2 className="font-display text-xl font-bold">{recipe.title}</h2>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className={`h-9 w-9 ${isSpeaking ? "text-primary animate-pulse" : "text-muted-foreground hover:text-primary"}`}
+                        onClick={() => isSpeaking ? stopSpeaking() : speakRecipe(recipe)}
+                        title={isSpeaking ? "Stop speaking" : "Read recipe aloud"}
+                      >
+                        {isSpeaking ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
+                      </Button>
+                    </div>
                     {recipe.description && (
                       <p className="text-sm text-muted-foreground">{recipe.description}</p>
                     )}
