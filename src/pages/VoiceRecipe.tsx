@@ -42,7 +42,7 @@ const VoiceRecipe = () => {
     const recognition = new SpeechRecognition();
     recognition.continuous = true;
     recognition.interimResults = true;
-    recognition.lang = "en-IN";
+    recognition.lang = selectedLang;
 
     let finalTranscript = "";
 
