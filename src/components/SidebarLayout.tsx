@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
-  LayoutDashboard, Plus, BookOpen, Mic, Download, Search, Bell, User, ChefHat, LogOut, Shield,
+  LayoutDashboard, Plus, BookOpen, Mic, Download, Search, Bell, User, UtensilsCrossed, LogOut, Shield,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
