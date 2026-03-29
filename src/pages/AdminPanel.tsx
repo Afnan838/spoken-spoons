@@ -42,8 +42,9 @@ const AdminPanel = () => {
   const [recipes, setRecipes] = useState(getLocalRecipes());
   const [search, setSearch] = useState("");
   const [selectedRecipe, setSelectedRecipe] = useState<RecipeData | null>(null);
+  const adminAccess = user && isAdmin();
 
-  if (!user || !isAdmin()) {
+  if (!adminAccess) {
     return (
       <SidebarLayout>
         <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">

@@ -4,6 +4,9 @@ import {
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
+import { isAdmin } from "@/lib/auth";
+import { Shield } from "lucide-react";
+
 const navItems = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/create", label: "Create Recipe", icon: Plus },
