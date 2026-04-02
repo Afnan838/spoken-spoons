@@ -375,10 +375,10 @@ const VoiceRecipe = () => {
 
                 {/* How it works */}
                 <div className="section-card text-xs text-muted-foreground space-y-2">
-                  <h3 className="font-semibold text-foreground text-sm">🎙️ Works like Alexa & Siri</h3>
-                  <p>1. <strong>Tap mic</strong> and speak naturally in any Indian language</p>
-                  <p>2. <strong>Pause speaking</strong> — AI auto-detects silence and starts processing</p>
-                  <p>3. <strong>AI structures</strong> your recipe with ingredients, steps & timing</p>
+                  <h3 className="font-semibold text-foreground text-sm">🎙️ Meet {ASSISTANT_NAME} — Your Voice Chef</h3>
+                  <p>1. <strong>Say "Hey {ASSISTANT_NAME}"</strong> or tap mic and speak naturally in any language</p>
+                  <p>2. <strong>Pause speaking</strong> — {ASSISTANT_NAME} auto-detects silence and starts processing</p>
+                  <p>3. <strong>{ASSISTANT_NAME} structures</strong> your recipe with ingredients, steps & timing</p>
                   <p>4. <strong>Reads it back</strong> to you in your language via text-to-speech</p>
                   <p>5. <strong>Review & save</strong> — edit before saving to your collection</p>
                 </div>
