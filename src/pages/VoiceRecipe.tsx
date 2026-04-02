@@ -469,7 +469,7 @@ const VoiceRecipe = () => {
                       <Mic className="h-6 w-6 text-primary absolute -bottom-1 -right-1" />
                     </div>
                     <p className="text-muted-foreground text-sm font-medium">
-                      "Hey, make me a chicken biryani..."
+                      "Hey {ASSISTANT_NAME}, make me a chicken biryani..."
                     </p>
                     <p className="text-muted-foreground/60 text-xs mt-2">
                       Just speak naturally — I'll structure the entire recipe for you
