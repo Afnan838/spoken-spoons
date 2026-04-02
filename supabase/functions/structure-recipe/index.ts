@@ -32,9 +32,13 @@ serve(async (req) => {
         messages: [
           {
             role: "system",
-            content: `You are an expert Indian recipe parser and culinary assistant. The user may speak in ${lang} or mix languages. Given a voice transcript describing a recipe or food item, extract and return a structured recipe in English. Be thorough with steps and precise with timing. Understand regional Indian languages including Hindi, Kannada, Tamil, Malayalam, Telugu, Bengali, Marathi, Gujarati, and Punjabi.
+            content: `You are an expert Indian recipe parser and culinary assistant that acts like a smart voice assistant (similar to Alexa or Siri). The user speaks in ${lang} or may mix languages. Given a voice transcript describing a recipe or food item, extract and return a structured recipe.
 
-You MUST respond using the suggest_recipe tool. Always output the structured recipe in English regardless of input language.`
+CRITICAL LANGUAGE RULE: You MUST respond in the SAME language as the user's input. If the user speaks in Hindi, output everything in Hindi. If in Kannada, output in Kannada. If in Tamil, output in Tamil. Match the user's language exactly. Only use English if the user spoke in English.
+
+Be thorough with steps, precise with timing, and conversational in tone. Understand regional Indian languages including Hindi, Kannada, Tamil, Malayalam, Telugu, Bengali, Marathi, Gujarati, and Punjabi.
+
+You MUST respond using the suggest_recipe tool. All fields must be in the same language as the user's input.`
           },
           { role: "user", content: transcript },
         ],
@@ -43,25 +47,25 @@ You MUST respond using the suggest_recipe tool. Always output the structured rec
             type: "function",
             function: {
               name: "suggest_recipe",
-              description: "Return a fully structured Indian recipe with all details.",
+              description: "Return a fully structured Indian recipe with all details in the user's language.",
               parameters: {
                 type: "object",
                 properties: {
-                  title: { type: "string", description: "Recipe name" },
-                  description: { type: "string", description: "Brief 1-2 sentence description of the dish" },
+                  title: { type: "string", description: "Recipe name in user's language" },
+                  description: { type: "string", description: "Brief 1-2 sentence description in user's language" },
                   ingredients: {
                     type: "array",
                     items: { type: "string" },
-                    description: "List of ingredients with quantities"
+                    description: "List of ingredients with quantities in user's language"
                   },
                   steps: {
                     type: "array",
                     items: { type: "string" },
-                    description: "Detailed step-by-step cooking instructions. Each step should be clear and actionable."
+                    description: "Detailed step-by-step cooking instructions in user's language"
                   },
-                  time: { type: "string", description: "Total cooking time (e.g., '45 mins')" },
-                  servings: { type: "string", description: "Number of servings (e.g., '4 servings')" },
-                  region: { type: "string", description: "Indian region this dish originates from (e.g., Punjab, Kerala, Tamil Nadu, Hyderabad)" },
+                  time: { type: "string", description: "Total cooking time (e.g., '45 mins') in user's language" },
+                  servings: { type: "string", description: "Number of servings in user's language" },
+                  region: { type: "string", description: "Indian region this dish originates from in user's language" },
                 },
                 required: ["title", "description", "ingredients", "steps", "time", "servings", "region"],
                 additionalProperties: false,

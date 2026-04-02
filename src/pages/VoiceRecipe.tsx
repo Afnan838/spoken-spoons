@@ -1,6 +1,6 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mic, Square, Loader2, ChefHat, Clock, Users, MapPin, Globe, Volume2, VolumeX } from "lucide-react";
+import { Mic, Square, Loader2, ChefHat, Clock, Users, MapPin, Globe, Volume2, VolumeX, Zap } from "lucide-react";
 import { toast } from "sonner";
 import SidebarLayout from "@/components/SidebarLayout";
 import RecipeConfirm from "@/components/RecipeConfirm";
@@ -11,16 +11,16 @@ import { type RecipeData, saveLocalRecipe } from "@/lib/api";
 import { supabase } from "@/integrations/supabase/client";
 
 const LANGUAGES = [
-  { code: "en-IN", label: "English" },
-  { code: "hi-IN", label: "Hindi (हिन्दी)" },
-  { code: "kn-IN", label: "Kannada (ಕನ್ನಡ)" },
-  { code: "ta-IN", label: "Tamil (தமிழ்)" },
-  { code: "ml-IN", label: "Malayalam (മലയാളം)" },
-  { code: "te-IN", label: "Telugu (తెలుగు)" },
-  { code: "bn-IN", label: "Bengali (বাংলা)" },
-  { code: "mr-IN", label: "Marathi (मराठी)" },
-  { code: "gu-IN", label: "Gujarati (ગુજરાતી)" },
-  { code: "pa-IN", label: "Punjabi (ਪੰਜਾਬੀ)" },
+  { code: "en-IN", label: "English", ttsLang: "en-IN" },
+  { code: "hi-IN", label: "Hindi (हिन्दी)", ttsLang: "hi-IN" },
+  { code: "kn-IN", label: "Kannada (ಕನ್ನಡ)", ttsLang: "kn-IN" },
+  { code: "ta-IN", label: "Tamil (தமிழ்)", ttsLang: "ta-IN" },
+  { code: "ml-IN", label: "Malayalam (മലയാളം)", ttsLang: "ml-IN" },
+  { code: "te-IN", label: "Telugu (తెలుగు)", ttsLang: "te-IN" },
+  { code: "bn-IN", label: "Bengali (বাংলা)", ttsLang: "bn-IN" },
+  { code: "mr-IN", label: "Marathi (मराठी)", ttsLang: "mr-IN" },
+  { code: "gu-IN", label: "Gujarati (ગુજરાતી)", ttsLang: "gu-IN" },
+  { code: "pa-IN", label: "Punjabi (ਪੰਜਾਬੀ)", ttsLang: "pa-IN" },
 ];
 
 const VoiceRecipe = () => {
@@ -31,26 +31,86 @@ const VoiceRecipe = () => {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [selectedLang, setSelectedLang] = useState("en-IN");
+  const [handsFree, setHandsFree] = useState(true);
+  const [statusText, setStatusText] = useState("Tap the mic to start");
   const recognitionRef = useRef<any>(null);
+  const silenceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const transcriptRef = useRef("");
 
-  const speakRecipe = useCallback((recipeData: Partial<RecipeData>) => {
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      recognitionRef.current?.stop();
+      window.speechSynthesis?.cancel();
+      if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+    };
+  }, []);
+
+  const speakRecipe = useCallback((recipeData: Partial<RecipeData>, langCode: string) => {
     if (!("speechSynthesis" in window)) return;
     window.speechSynthesis.cancel();
-    const text = `Here is your recipe for ${recipeData.title}. ${recipeData.description || ""} You will need ${recipeData.ingredients?.length || 0} ingredients. ${recipeData.ingredients?.join(", ")}. The cooking steps are: ${recipeData.steps?.map((s, i) => `Step ${i + 1}: ${s}`).join(". ")}. Total cooking time is ${recipeData.time || "not specified"}. This serves ${recipeData.servings || "4"}. This dish originates from ${recipeData.region || "India"}.`;
+
+    const ttsLang = LANGUAGES.find(l => l.code === langCode)?.ttsLang || "en-IN";
+
+    const text = `${recipeData.title}. ${recipeData.description || ""} ${recipeData.ingredients?.join(", ")}. ${recipeData.steps?.map((s, i) => `${i + 1}. ${s}`).join(". ")}. ${recipeData.time || ""}. ${recipeData.servings || ""}. ${recipeData.region || ""}.`;
     const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = "en-IN";
+    utterance.lang = ttsLang;
     utterance.rate = 0.9;
     utterance.pitch = 1;
-    utterance.onstart = () => setIsSpeaking(true);
-    utterance.onend = () => setIsSpeaking(false);
-    utterance.onerror = () => setIsSpeaking(false);
+    utterance.onstart = () => {
+      setIsSpeaking(true);
+      setStatusText("🔊 Reading recipe aloud...");
+    };
+    utterance.onend = () => {
+      setIsSpeaking(false);
+      setStatusText("✅ Done! Tap mic to try another recipe");
+    };
+    utterance.onerror = () => {
+      setIsSpeaking(false);
+      setStatusText("Ready");
+    };
     speechSynthesis.speak(utterance);
   }, []);
 
   const stopSpeaking = useCallback(() => {
     window.speechSynthesis?.cancel();
     setIsSpeaking(false);
+    setStatusText("Ready");
   }, []);
+
+  const processWithAI = useCallback(async (text: string) => {
+    if (!text.trim()) return;
+
+    setIsProcessing(true);
+    setStatusText("🧠 AI is thinking...");
+    try {
+      const langLabel = LANGUAGES.find(l => l.code === selectedLang)?.label || "English";
+      const { data, error } = await supabase.functions.invoke("structure-recipe", {
+        body: { transcript: text.trim(), language: langLabel },
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      const structured = data.recipe;
+      const fullRecipe = {
+        ...structured,
+        id: crypto.randomUUID(),
+        createdAt: new Date().toISOString(),
+      };
+      setRecipe(fullRecipe);
+      setShowConfirm(true);
+      setStatusText("✨ Recipe ready!");
+      toast.success("Recipe structured by AI!");
+      speakRecipe(fullRecipe, selectedLang);
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || "Failed to process recipe with AI");
+      setStatusText("❌ Error — try again");
+    } finally {
+      setIsProcessing(false);
+    }
+  }, [selectedLang, speakRecipe]);
 
   const startRecording = useCallback(() => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -76,7 +136,23 @@ const VoiceRecipe = () => {
           interim = t;
         }
       }
-      setTranscript(finalTranscript + interim);
+      const combined = finalTranscript + interim;
+      setTranscript(combined);
+      transcriptRef.current = finalTranscript;
+      setStatusText("👂 Listening...");
+
+      // Hands-free: auto-process after 2.5s of silence
+      if (handsFree) {
+        if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+        silenceTimerRef.current = setTimeout(() => {
+          if (finalTranscript.trim().length > 5) {
+            recognition.stop();
+            setIsRecording(false);
+            setStatusText("🛑 Processing your voice...");
+            processWithAI(finalTranscript.trim());
+          }
+        }, 2500);
+      }
     };
 
     recognition.onerror = (event: any) => {
@@ -84,10 +160,12 @@ const VoiceRecipe = () => {
         toast.error(`Mic error: ${event.error}`);
       }
       setIsRecording(false);
+      setStatusText("Tap to try again");
     };
 
     recognition.onend = () => {
       setIsRecording(false);
+      if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
     };
 
     recognitionRef.current = recognition;
@@ -96,46 +174,22 @@ const VoiceRecipe = () => {
     setRecipe(null);
     setShowConfirm(false);
     setTranscript("");
-  }, [selectedLang]);
+    transcriptRef.current = "";
+    setStatusText("👂 Listening... speak your recipe");
+  }, [selectedLang, handsFree, processWithAI]);
 
   const stopRecording = useCallback(() => {
+    if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
     recognitionRef.current?.stop();
     setIsRecording(false);
-  }, []);
 
-  const processWithAI = useCallback(async () => {
-    if (!transcript.trim()) {
-      toast.error("Please record or type a recipe description first.");
-      return;
+    // If hands-free and has transcript, auto-process
+    if (handsFree && transcriptRef.current.trim().length > 5) {
+      processWithAI(transcriptRef.current.trim());
+    } else {
+      setStatusText("Tap 'Structure Recipe' to process");
     }
-
-    setIsProcessing(true);
-    try {
-      const langLabel = LANGUAGES.find(l => l.code === selectedLang)?.label || "English";
-      const { data, error } = await supabase.functions.invoke("structure-recipe", {
-        body: { transcript: transcript.trim(), language: langLabel },
-      });
-
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-
-      const structured = data.recipe;
-      const fullRecipe = {
-        ...structured,
-        id: crypto.randomUUID(),
-        createdAt: new Date().toISOString(),
-      };
-      setRecipe(fullRecipe);
-      setShowConfirm(true);
-      toast.success("Recipe structured by AI!");
-      speakRecipe(fullRecipe);
-    } catch (err: any) {
-      console.error(err);
-      toast.error(err.message || "Failed to process recipe with AI");
-    } finally {
-      setIsProcessing(false);
-    }
-  }, [transcript]);
+  }, [handsFree, processWithAI]);
 
   const handleConfirmSave = useCallback(async (confirmedRecipe: RecipeData) => {
     saveLocalRecipe(confirmedRecipe);
@@ -143,14 +197,18 @@ const VoiceRecipe = () => {
     setShowConfirm(false);
     setRecipe(null);
     setTranscript("");
+    setStatusText("✅ Saved! Tap mic for another recipe");
   }, []);
 
   return (
     <SidebarLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-display font-bold">Voice Recipe Capture</h1>
-          <p className="text-sm text-muted-foreground">Speak or type your recipe — AI structures it with ingredients, steps & timing</p>
+          <h1 className="text-2xl font-display font-bold flex items-center gap-2">
+            <Zap className="h-6 w-6 text-primary" />
+            Voice Recipe Assistant
+          </h1>
+          <p className="text-sm text-muted-foreground">Speak naturally like talking to Alexa or Siri — your recipe is structured instantly in your language</p>
         </div>
 
         <AnimatePresence mode="wait">
@@ -159,17 +217,28 @@ const VoiceRecipe = () => {
               key="confirm"
               recipe={recipe as RecipeData}
               onConfirm={handleConfirmSave}
-              onCancel={() => setShowConfirm(false)}
+              onCancel={() => { setShowConfirm(false); setStatusText("Ready"); }}
             />
           ) : (
             <motion.div key="capture" className="grid gap-6 lg:grid-cols-2">
               {/* Left: Input */}
               <div className="space-y-4">
-              {/* Language Selector */}
+                {/* Language + Hands-Free Controls */}
                 <div className="section-card">
-                  <div className="flex items-center gap-3">
-                    <Globe className="h-4 w-4 text-primary" />
-                    <span className="text-sm font-medium">Voice Language</span>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Globe className="h-4 w-4 text-primary" />
+                      <span className="text-sm font-medium">Voice Language</span>
+                    </div>
+                    <Button
+                      variant={handsFree ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setHandsFree(!handsFree)}
+                      className="text-xs"
+                    >
+                      <Zap className="h-3 w-3 mr-1" />
+                      {handsFree ? "Hands-Free ON" : "Hands-Free OFF"}
+                    </Button>
                   </div>
                   <Select value={selectedLang} onValueChange={setSelectedLang}>
                     <SelectTrigger className="mt-2 bg-background border-border">
@@ -183,98 +252,132 @@ const VoiceRecipe = () => {
                       ))}
                     </SelectContent>
                   </Select>
+                  {handsFree && (
+                    <p className="text-xs text-primary/70 mt-2">
+                      ⚡ Hands-free mode: Speak and pause — AI auto-processes after you stop talking
+                    </p>
+                  )}
                 </div>
 
-                {/* Mic button */}
-                <div className="section-card flex flex-col items-center py-10">
+                {/* Status Indicator */}
+                <motion.div
+                  className="section-card text-center py-3"
+                  animate={{
+                    borderColor: isRecording ? "hsl(var(--primary))" : isProcessing ? "hsl(var(--accent))" : "hsl(var(--border))",
+                  }}
+                >
+                  <p className="text-sm font-medium">{statusText}</p>
+                </motion.div>
+
+                {/* Mic button — large and prominent like Alexa */}
+                <div className="section-card flex flex-col items-center py-12">
                   <div className="relative">
                     {isRecording && (
                       <>
                         <motion.div
-                          className="absolute inset-0 rounded-full bg-destructive/20"
-                          animate={{ scale: [1, 1.6, 1], opacity: [0.4, 0, 0.4] }}
-                          transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+                          className="absolute inset-0 rounded-full bg-primary/20"
+                          animate={{ scale: [1, 1.8, 1], opacity: [0.5, 0, 0.5] }}
+                          transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
                         />
                         <motion.div
-                          className="absolute inset-0 rounded-full bg-destructive/10"
-                          animate={{ scale: [1, 2, 1], opacity: [0.3, 0, 0.3] }}
-                          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut", delay: 0.3 }}
+                          className="absolute inset-0 rounded-full bg-primary/10"
+                          animate={{ scale: [1, 2.4, 1], opacity: [0.3, 0, 0.3] }}
+                          transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut", delay: 0.2 }}
+                        />
+                        <motion.div
+                          className="absolute inset-0 rounded-full bg-primary/5"
+                          animate={{ scale: [1, 3, 1], opacity: [0.2, 0, 0.2] }}
+                          transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut", delay: 0.4 }}
                         />
                       </>
+                    )}
+                    {isProcessing && (
+                      <motion.div
+                        className="absolute inset-0 rounded-full border-4 border-primary/40 border-t-primary"
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                        style={{ width: "120px", height: "120px", top: "-10px", left: "-10px" }}
+                      />
                     )}
                     <Button
                       size="lg"
                       variant={isRecording ? "destructive" : "default"}
-                      className={`relative z-10 h-20 w-20 rounded-full ${
+                      className={`relative z-10 h-24 w-24 rounded-full text-lg ${
                         isRecording ? "" : "bg-primary hover:bg-primary/90 glow-orange"
                       }`}
                       onClick={isRecording ? stopRecording : startRecording}
                       disabled={isProcessing}
                     >
-                      {isRecording ? (
-                        <Square className="h-7 w-7 fill-current" />
+                      {isProcessing ? (
+                        <Loader2 className="h-10 w-10 animate-spin" />
+                      ) : isRecording ? (
+                        <Square className="h-8 w-8 fill-current" />
                       ) : (
-                        <Mic className="h-8 w-8" />
+                        <Mic className="h-10 w-10" />
                       )}
                     </Button>
                   </div>
-                  <p className="text-sm text-muted-foreground mt-4">
-                    {isRecording ? (
-                      <span className="flex items-center gap-2">
-                        <span className="h-2 w-2 rounded-full bg-destructive animate-pulse-recording" />
-                        Listening... tap to stop
+                  <p className="text-sm text-muted-foreground mt-5">
+                    {isProcessing ? (
+                      "AI is structuring your recipe..."
+                    ) : isRecording ? (
+                      <span className="flex items-center gap-2 text-primary">
+                        <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+                        Listening... {handsFree ? "pause to auto-process" : "tap to stop"}
                       </span>
                     ) : (
-                      "Tap to start speaking your recipe"
+                      "Tap to start — speak naturally in any language"
                     )}
                   </p>
                 </div>
 
                 {/* Transcript area */}
                 <div className="section-card">
-                  <h3 className="text-sm font-semibold text-muted-foreground mb-2">Recipe Description</h3>
+                  <h3 className="text-sm font-semibold text-muted-foreground mb-2">What I heard</h3>
                   <Textarea
-                    placeholder="Speak or type your recipe here... e.g., 'I want to make chicken biryani with basmati rice and yogurt marinade'"
+                    placeholder="Your voice input appears here... or type a recipe description manually"
                     value={transcript}
                     onChange={(e) => setTranscript(e.target.value)}
-                    className="min-h-[120px] bg-background border-border resize-none"
+                    className="min-h-[100px] bg-background border-border resize-none"
                   />
                 </div>
 
-                {/* Process button */}
-                <Button
-                  onClick={processWithAI}
-                  disabled={isProcessing || !transcript.trim()}
-                  className="w-full glow-orange"
-                >
-                  {isProcessing ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      AI is structuring your recipe...
-                    </>
-                  ) : (
-                    <>
-                      <ChefHat className="h-4 w-4 mr-2" />
-                      Structure Recipe with AI
-                    </>
-                  )}
-                </Button>
+                {/* Manual process button (visible when hands-free is off) */}
+                {!handsFree && (
+                  <Button
+                    onClick={() => processWithAI(transcript)}
+                    disabled={isProcessing || !transcript.trim()}
+                    className="w-full glow-orange"
+                  >
+                    {isProcessing ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        AI is structuring your recipe...
+                      </>
+                    ) : (
+                      <>
+                        <ChefHat className="h-4 w-4 mr-2" />
+                        Structure Recipe with AI
+                      </>
+                    )}
+                  </Button>
+                )}
 
                 {/* TTS Control */}
                 {isSpeaking && (
                   <Button variant="outline" onClick={stopSpeaking} className="w-full border-destructive/30 text-destructive hover:bg-destructive/10">
-                    <VolumeX className="h-4 w-4 mr-2" /> Stop AI Voice
+                    <VolumeX className="h-4 w-4 mr-2" /> Stop Voice
                   </Button>
                 )}
 
-                {/* Architecture Info */}
+                {/* How it works */}
                 <div className="section-card text-xs text-muted-foreground space-y-2">
-                  <h3 className="font-semibold text-foreground text-sm">How it works</h3>
-                  <p>1. <strong>Voice Input</strong> → Browser Speech Recognition captures your words</p>
-                  <p>2. <strong>AI Processing</strong> → Transcript sent to AI for structured extraction</p>
-                  <p>3. <strong>Structured Output</strong> → Title, ingredients, steps, time, region parsed</p>
-                  <p>4. <strong>AI Voice Response</strong> → Text-to-Speech reads the recipe back</p>
-                  <p>5. <strong>Review & Save</strong> → Edit the AI output before saving</p>
+                  <h3 className="font-semibold text-foreground text-sm">🎙️ Works like Alexa & Siri</h3>
+                  <p>1. <strong>Tap mic</strong> and speak naturally in any Indian language</p>
+                  <p>2. <strong>Pause speaking</strong> — AI auto-detects silence and starts processing</p>
+                  <p>3. <strong>AI structures</strong> your recipe with ingredients, steps & timing</p>
+                  <p>4. <strong>Reads it back</strong> to you in your language via text-to-speech</p>
+                  <p>5. <strong>Review & save</strong> — edit before saving to your collection</p>
                 </div>
               </div>
 
@@ -292,7 +395,7 @@ const VoiceRecipe = () => {
                         variant="ghost"
                         size="icon"
                         className={`h-9 w-9 ${isSpeaking ? "text-primary animate-pulse" : "text-muted-foreground hover:text-primary"}`}
-                        onClick={() => isSpeaking ? stopSpeaking() : speakRecipe(recipe)}
+                        onClick={() => isSpeaking ? stopSpeaking() : speakRecipe(recipe, selectedLang)}
                         title={isSpeaking ? "Stop speaking" : "Read recipe aloud"}
                       >
                         {isSpeaking ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
@@ -358,12 +461,15 @@ const VoiceRecipe = () => {
                   </motion.div>
                 ) : (
                   <div className="section-card flex flex-col items-center justify-center py-20 text-center">
-                    <ChefHat className="h-12 w-12 text-muted-foreground/30 mb-3" />
-                    <p className="text-muted-foreground text-sm">
-                      Your AI-structured recipe will appear here
+                    <div className="relative mb-4">
+                      <ChefHat className="h-16 w-16 text-muted-foreground/20" />
+                      <Mic className="h-6 w-6 text-primary absolute -bottom-1 -right-1" />
+                    </div>
+                    <p className="text-muted-foreground text-sm font-medium">
+                      "Hey, make me a chicken biryani..."
                     </p>
-                    <p className="text-muted-foreground/60 text-xs mt-1">
-                      Record or type a recipe description, then click "Structure Recipe"
+                    <p className="text-muted-foreground/60 text-xs mt-2">
+                      Just speak naturally — I'll structure the entire recipe for you
                     </p>
                   </div>
                 )}
