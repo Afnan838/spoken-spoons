@@ -156,12 +156,27 @@ const CreateRecipe = () => {
               <span>OR UPLOAD VIDEO</span>
               <div className="flex-1 h-px bg-border" />
             </div>
-            <div className="flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-border/50 py-10">
-              <Upload className="h-6 w-6 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">Drag and drop your video here</p>
-              <p className="text-xs text-muted-foreground">MP4, WebM or Ogg (max. 50MB)</p>
-              <Button variant="outline" size="sm" className="border-primary text-primary mt-1">Browse Videos</Button>
-            </div>
+            {videoPreview ? (
+              <div className="relative rounded-lg overflow-hidden border border-border">
+                <video src={videoPreview} controls className="w-full max-h-64 object-contain bg-black" />
+                <Button size="icon" variant="destructive" className="absolute top-2 right-2 h-8 w-8 rounded-full" onClick={() => { setVideoPreview(null); setVideoFile(null); if (videoInputRef.current) videoInputRef.current.value = ""; }}>
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            ) : (
+              <div
+                className="flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-border/50 py-10 cursor-pointer hover:border-primary/50 transition-colors"
+                onClick={() => videoInputRef.current?.click()}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f && f.type.startsWith("video/")) { setVideoFile(f); setVideoPreview(URL.createObjectURL(f)); } }}
+              >
+                <Upload className="h-6 w-6 text-muted-foreground" />
+                <p className="text-sm text-muted-foreground">Drag and drop your video here</p>
+                <p className="text-xs text-muted-foreground">MP4, WebM or Ogg (max. 50MB)</p>
+                <Button variant="outline" size="sm" className="border-primary text-primary mt-1" type="button">Browse Videos</Button>
+              </div>
+            )}
+            <input ref={videoInputRef} type="file" accept="video/mp4,video/webm,video/ogg" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) { setVideoFile(f); setVideoPreview(URL.createObjectURL(f)); } }} />
           </div>
 
           {/* Ingredients */}
