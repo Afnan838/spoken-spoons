@@ -84,6 +84,18 @@ const VoiceRecipe = () => {
     utterance.lang = ttsLang;
     utterance.rate = 0.95;
     utterance.pitch = 1.1;
+
+    // Select a female voice for Ira
+    const voices = window.speechSynthesis.getVoices();
+    const femaleVoice = voices.find(v =>
+      v.lang.startsWith(ttsLang.split("-")[0]) &&
+      (/female/i.test(v.name) || /woman/i.test(v.name) || /zira/i.test(v.name) || /samantha/i.test(v.name) || /google.*female/i.test(v.name))
+    ) || voices.find(v =>
+      v.lang.startsWith(ttsLang.split("-")[0]) &&
+      !(/male/i.test(v.name) && !/female/i.test(v.name))
+    );
+    if (femaleVoice) utterance.voice = femaleVoice;
+
     utterance.onstart = () => {
       setIsSpeaking(true);
       setStatusText(`🔊 ${ASSISTANT_NAME} is speaking...`);
