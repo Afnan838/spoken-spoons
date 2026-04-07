@@ -51,8 +51,8 @@ const SidebarLayout = ({ children }: { children: React.ReactNode }) => {
             <UtensilsCrossed className="h-5 w-5 text-primary-foreground" />
           </div>
           <div>
-            <p className="font-display text-base font-bold text-foreground">Indian</p>
-            <p className="text-xs text-muted-foreground">Recipe Platform</p>
+            <p className="font-display text-base font-bold text-foreground">Zestify</p>
+            <p className="text-xs text-muted-foreground">Indian Recipe Platform</p>
           </div>
         </Link>
 

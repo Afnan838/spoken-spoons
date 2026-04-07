@@ -195,7 +195,7 @@ export async function exportRecipeBookPdf(recipes: RecipeData[], options?: { add
   const addPageFooter = (pageNum?: number, total?: number) => {
     doc.setFontSize(7);
     doc.setTextColor(...LIGHT_GRAY);
-    doc.text("Indian Recipe AI — Recipe Book", margin, pageHeight - 10);
+    doc.text("Zestify — Recipe Book", margin, pageHeight - 10);
     if (pageNum !== undefined && total !== undefined) {
       doc.text(`Page ${pageNum} of ${total}`, pageWidth - margin, pageHeight - 10, { align: "right" });
     }
