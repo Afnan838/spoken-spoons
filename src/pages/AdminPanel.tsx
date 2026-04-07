@@ -76,7 +76,22 @@ const AdminPanel = () => {
   const handleDelete = (id: string) => {
     deleteLocalRecipe(id);
     setRecipes(getLocalRecipes());
+    setPendingRecipes(getPendingRecipes());
     toast.success("Recipe deleted");
+  };
+
+  const handleApprove = (id: string) => {
+    approveRecipe(id);
+    setRecipes(getLocalRecipes());
+    setPendingRecipes(getPendingRecipes());
+    toast.success("Recipe approved!");
+  };
+
+  const handleReject = (id: string) => {
+    rejectRecipe(id);
+    setRecipes(getLocalRecipes());
+    setPendingRecipes(getPendingRecipes());
+    toast.success("Recipe rejected");
   };
 
   const handleLogout = () => {
