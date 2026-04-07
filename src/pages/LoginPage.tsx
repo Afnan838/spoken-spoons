@@ -65,8 +65,7 @@ const LoginPage = () => {
             <ChefHat className="h-10 w-10 text-primary-foreground" />
           </div>
           <h1 className="font-display text-4xl font-bold mb-4">
-            Indian<br />
-            <span className="text-gradient-orange">Recipe AI</span>
+            <span className="text-gradient-orange">Zestify</span>
           </h1>
           <p className="text-muted-foreground leading-relaxed">
             Preserve traditional recipes with AI-powered voice capture, structured output, and real-time processing.
@@ -87,7 +86,7 @@ const LoginPage = () => {
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary">
               <ChefHat className="h-5 w-5 text-primary-foreground" />
             </div>
-            <span className="font-display text-xl font-bold">Recipe AI</span>
+            <span className="font-display text-xl font-bold">Zestify</span>
           </div>
 
           <div>
