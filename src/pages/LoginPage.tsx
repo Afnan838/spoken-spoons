@@ -65,8 +65,7 @@ const LoginPage = () => {
             <ChefHat className="h-10 w-10 text-primary-foreground" />
           </div>
           <h1 className="font-display text-4xl font-bold mb-4">
-            Indian<br />
-            <span className="text-gradient-orange">Recipe AI</span>
+            <span className="text-gradient-orange">Zestify</span>
           </h1>
           <p className="text-muted-foreground leading-relaxed">
             Preserve traditional recipes with AI-powered voice capture, structured output, and real-time processing.
