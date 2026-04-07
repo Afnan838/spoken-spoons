@@ -6,7 +6,7 @@ import SidebarLayout from "@/components/SidebarLayout";
 import { getLocalRecipes, REGIONS } from "@/lib/api";
 
 const MyRecipes = () => {
-  const [recipes] = useState(getLocalRecipes());
+  const [recipes] = useState(() => getLocalRecipes().filter(r => r.status !== "pending" && r.status !== "rejected"));
   const [activeRegion, setActiveRegion] = useState("All");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
