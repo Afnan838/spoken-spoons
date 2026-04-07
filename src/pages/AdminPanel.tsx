@@ -50,9 +50,14 @@ const AdminPanel = () => {
   const [selectedRecipe, setSelectedRecipe] = useState<RecipeData | null>(null);
   const adminAccess = user && isAdmin();
 
+  const approvedRecipes = useMemo(() =>
+    recipes.filter((r) => r.status !== "pending" && r.status !== "rejected"),
+    [recipes]
+  );
+
   const filtered = useMemo(() =>
-    recipes.filter((r) => r.title.toLowerCase().includes(search.toLowerCase())),
-    [recipes, search]
+    approvedRecipes.filter((r) => r.title.toLowerCase().includes(search.toLowerCase())),
+    [approvedRecipes, search]
   );
 
   if (!adminAccess) {
