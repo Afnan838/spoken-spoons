@@ -6,52 +6,52 @@
 
 @layer base {
   :root {
-    --background: 0 0% 98%;
-    --foreground: 128 15% 22%;
+    --background: 42 60% 95%;
+    --foreground: 0 0% 15%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 128 15% 22%;
+    --card: 42 50% 97%;
+    --card-foreground: 0 0% 15%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 128 15% 22%;
+    --popover: 42 50% 97%;
+    --popover-foreground: 0 0% 15%;
 
-    --primary: 133 16% 55%;
+    --primary: 0 80% 50%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 110 16% 87%;
-    --secondary-foreground: 128 15% 22%;
+    --secondary: 42 40% 90%;
+    --secondary-foreground: 0 0% 20%;
 
-    --muted: 110 16% 91%;
-    --muted-foreground: 128 10% 45%;
+    --muted: 42 30% 88%;
+    --muted-foreground: 0 0% 40%;
 
-    --accent: 133 16% 55%;
+    --accent: 0 80% 50%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 110 12% 82%;
-    --input: 110 12% 82%;
-    --ring: 133 16% 55%;
+    --border: 42 25% 82%;
+    --input: 42 25% 82%;
+    --ring: 0 80% 50%;
 
     --radius: 0.75rem;
 
-    --sidebar-bg: 110 16% 94%;
-    --sidebar-fg: 128 10% 45%;
-    --sidebar-active: 133 16% 55%;
-    --sidebar-hover: 110 16% 89%;
+    --sidebar-bg: 42 40% 92%;
+    --sidebar-fg: 0 0% 35%;
+    --sidebar-active: 0 80% 50%;
+    --sidebar-hover: 42 35% 88%;
 
     --success: 142 71% 45%;
     --success-foreground: 0 0% 100%;
 
-    --sidebar-background: 110 16% 94%;
-    --sidebar-foreground: 128 10% 45%;
-    --sidebar-primary: 133 16% 55%;
+    --sidebar-background: 42 40% 92%;
+    --sidebar-foreground: 0 0% 35%;
+    --sidebar-primary: 0 80% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 110 16% 89%;
-    --sidebar-accent-foreground: 128 15% 22%;
-    --sidebar-border: 110 12% 82%;
-    --sidebar-ring: 133 16% 55%;
+    --sidebar-accent: 42 35% 88%;
+    --sidebar-accent-foreground: 0 0% 15%;
+    --sidebar-border: 42 25% 82%;
+    --sidebar-ring: 0 80% 50%;
   }
 }
 
@@ -71,11 +71,11 @@
 
 @layer utilities {
   .glow-orange {
-    box-shadow: 0 0 20px hsl(133 16% 55% / 0.35);
+    box-shadow: 0 0 20px hsl(0 80% 50% / 0.4);
   }
 
   .text-gradient-orange {
-    @apply bg-gradient-to-r from-primary to-emerald-400 bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-primary to-red-400 bg-clip-text text-transparent;
   }
 
   @keyframes pulse-recording {
