@@ -71,11 +71,11 @@
 
 @layer utilities {
   .glow-orange {
-    box-shadow: 0 0 20px hsl(29 100% 50% / 0.4);
+    box-shadow: 0 0 20px hsl(133 16% 55% / 0.35);
   }
 
   .text-gradient-orange {
-    @apply bg-gradient-to-r from-primary to-orange-400 bg-clip-text text-transparent;
+    @apply bg-gradient-to-r from-primary to-emerald-400 bg-clip-text text-transparent;
   }
 
   @keyframes pulse-recording {
