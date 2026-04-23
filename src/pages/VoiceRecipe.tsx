@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Mic, Square, Loader2, ChefHat, Clock, Users, MapPin, Globe, Volume2, VolumeX, Zap, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
@@ -38,6 +39,7 @@ type ChatMessage = {
 };
 
 const VoiceRecipe = () => {
+  const navigate = useNavigate();
   const [transcript, setTranscript] = useState("");
   const [recipe, setRecipe] = useState<Partial<RecipeData> | null>(null);
   const [isRecording, setIsRecording] = useState(false);
@@ -170,8 +172,13 @@ const VoiceRecipe = () => {
       addChatMessage("ira", reply, emoji, intent);
       speak(reply, selectedLang);
 
-      // Step 2: If intent is "recipe", also structure the recipe
-      if (intent === "recipe") {
+      // Step 2: Handle specific intents
+      if (intent === "create_recipe") {
+        setStatusText(`Navigating to Create Recipe...`);
+        setTimeout(() => {
+          navigate("/create");
+        }, 1500);
+      } else if (intent === "recipe") {
         setStatusText(`🍳 ${ASSISTANT_NAME} is structuring your recipe...`);
 
         const { data, error } = await supabase.functions.invoke("structure-recipe", {
@@ -191,6 +198,9 @@ const VoiceRecipe = () => {
         setShowConfirm(true);
         setStatusText("✨ Recipe ready!");
         toast.success(`${ASSISTANT_NAME} structured your recipe!`);
+        
+        // Read out the entire generated recipe automatically
+        speakRecipe(fullRecipe, selectedLang);
       } else {
         setStatusText(`Tap mic to talk to ${ASSISTANT_NAME}`);
       }

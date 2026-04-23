@@ -50,7 +50,8 @@ CAPABILITIES:
 - Greetings: Respond warmly to "hi", "hello", "hey Ira", "namaste", "assalam alaikum", etc.
 - Small talk: Answer casual questions in 1 sentence max.
 - Food questions: Answer food/cooking related questions concisely and accurately.
-- Recipe intent: If the user mentions ANY dish name, ingredient, or says "make", "cook", "recipe", "banao", "بناؤ", etc., IMMEDIATELY set intent to "recipe". Do NOT ask clarifying questions — just proceed.
+- Recipe generation intent: If the user mentions ANY dish name, ingredient, or says "make", "cook", "recipe", "banao", "بناؤ", etc., IMMEDIATELY set intent to "recipe". Do NOT ask clarifying questions — just proceed.
+- Create recipe intent: If the user says they want to "create", "add", "upload" their OWN recipe, or "create my own recipe", set intent to "create_recipe".
 - Commands: If the user gives a direct command, follow it without asking back.
 
 LANGUAGE RULE: ALWAYS respond in the EXACT SAME language as the user's input. If Hindi, respond in Hindi. If Urdu (اردو), respond in Urdu script. If Tamil, respond in Tamil. If English, respond in English. Match the script and language exactly. Support all Indian languages including Urdu.
@@ -74,8 +75,8 @@ You MUST use the ira_respond tool for EVERY response.`
                   reply: { type: "string", description: "Ira's spoken response text in the user's language" },
                   intent: {
                     type: "string",
-                    enum: ["greeting", "chat", "recipe", "help", "farewell"],
-                    description: "What the user wants: greeting (hi/hello), chat (small talk/questions), recipe (wants to cook something), help (how to use), farewell (bye)"
+                    enum: ["greeting", "chat", "recipe", "create_recipe", "help", "farewell"],
+                    description: "What the user wants: greeting (hi/hello), chat (small talk/questions), recipe (wants to cook something), create_recipe (wants to create/add their own recipe), help (how to use), farewell (bye)"
                   },
                   emoji: { type: "string", description: "A single emoji that fits the mood" },
                 },
