@@ -111,7 +111,16 @@ const Dashboard = () => {
     { label: "New This Week", value: `+${stats.newThisWeek}`, icon: TrendingUp, color: "text-yellow-500", bgColor: "bg-yellow-500/10" },
     { label: "Avg Cook Time", value: `${stats.avgTime} min`, icon: Clock, color: "text-emerald-500", bgColor: "bg-emerald-500/10" },
     { label: "Total Users", value: usersCount || 1, icon: Users, color: "text-blue-400", bgColor: "bg-blue-400/10" },
-    { label: "Feedback Received", value: totalFeedback, icon: MessageSquare, color: "text-purple-400", bgColor: "bg-purple-400/10" },
+    { 
+      label: "Feedback Received", 
+      value: totalFeedback, 
+      icon: MessageSquare, 
+      color: "text-purple-400", 
+      bgColor: "bg-purple-400/10",
+      onClick: () => {
+        document.getElementById("community-feedback")?.scrollIntoView({ behavior: "smooth" });
+      }
+    },
   ];
 
   return (
@@ -120,13 +129,14 @@ const Dashboard = () => {
 
       {/* Stats Grid */}
       <div className="grid gap-4 grid-cols-2 md:grid-cols-5 mb-8">
-        {statCards.map(({ label, value, icon: Icon, color, bgColor }, i) => (
+        {statCards.map(({ label, value, icon: Icon, color, bgColor, onClick }, i) => (
           <motion.div
             key={label}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.1 }}
-            className="card p-5 flex flex-col justify-between hover:-translate-y-1 hover:shadow-[0_0_20px_rgba(59,130,246,0.15)] transition-all"
+            onClick={onClick}
+            className={`card p-5 flex flex-col justify-between hover:-translate-y-1 hover:shadow-[0_0_20px_rgba(59,130,246,0.15)] transition-all ${onClick ? 'cursor-pointer' : ''}`}
           >
             <div className="flex justify-between items-start mb-2">
               <span className="text-2xl font-bold text-white">{value}</span>
@@ -197,10 +207,11 @@ const Dashboard = () => {
       {/* Community Feedback List */}
       {feedbacks.length > 0 && (
         <motion.div
+          id="community-feedback"
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
-          className="mb-8"
+          className="mb-8 scroll-mt-24"
         >
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-bold text-white">Community Feedback</h2>
