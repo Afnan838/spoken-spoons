@@ -286,11 +286,13 @@ const AdminPanel = () => {
             <div className="grid gap-4 md:grid-cols-2">
               {(dbFeedbacks || []).map((fb, i) => {
                 if (!fb) return null;
+                const fbUser = dbUsers.find(u => u.email === fb.user_email);
+                const userName = fbUser ? fbUser.name : "Unknown User";
                 return (
                 <motion.div key={fb.id || i} initial={{opacity:0}} animate={{opacity:1}} transition={{delay: i*0.05}} className="card p-5 border-0 hover:border-cyan-500/30 transition-colors">
                   <div className="flex justify-between items-start mb-3">
                     <div>
-                      <p className="text-white font-medium">{fb.user_email || "Unknown User"}</p>
+                      <p className="text-white font-medium">{userName} <span className="text-xs text-slate-500">({fb.user_email})</span></p>
                       <p className="text-xs text-slate-400">{fb.created_at ? new Date(fb.created_at).toLocaleString() : "Unknown Date"}</p>
                     </div>
                     <div className="flex items-center gap-2">

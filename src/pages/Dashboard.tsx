@@ -18,6 +18,8 @@ const Dashboard = () => {
   const [rating, setRating] = useState(0);
   const [voiceBlob, setVoiceBlob] = useState<Blob | null>(null);
   const [playingAudio, setPlayingAudio] = useState<{ id: number, url: string } | null>(null);
+  const [dbUsers, setDbUsers] = useState<DBUser[]>([]);
+  const [feedbackSubmitCount, setFeedbackSubmitCount] = useState(0);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -25,6 +27,7 @@ const Dashboard = () => {
         const u = await getAllDBUsers();
         const f = await getAllDBFeedback();
         const r = await getRecipes();
+        setDbUsers(u);
         setUsersCount(u.length);
         setFeedbacks(f);
         setTotalFeedback(f.length);
@@ -86,6 +89,7 @@ const Dashboard = () => {
       setFeedbackText("");
       setRating(0);
       setVoiceBlob(null);
+      setFeedbackSubmitCount(c => c + 1);
       alert("Feedback submitted successfully!");
 
     } catch (error) {
@@ -186,6 +190,7 @@ const Dashboard = () => {
 
           <div className="mb-6">
             <VoiceRecorder 
+              key={feedbackSubmitCount}
               onSave={(blob) => setVoiceBlob(blob)} 
               onClear={() => setVoiceBlob(null)} 
             />
@@ -218,11 +223,14 @@ const Dashboard = () => {
           </div>
           
           <div className="grid gap-4 md:grid-cols-2">
-            {feedbacks.map((fb, i) => (
+            {feedbacks.map((fb, i) => {
+              const fbUser = dbUsers.find(u => u.email === fb.user_email);
+              const userName = fbUser ? fbUser.name : "Unknown User";
+              return (
               <motion.div key={fb.id || i} initial={{opacity:0}} animate={{opacity:1}} transition={{delay: i*0.05}} className="card p-5 border-0 hover:border-cyan-500/30 transition-colors">
                 <div className="flex justify-between items-start mb-3">
                   <div>
-                    <p className="text-white font-medium">{fb.user_email || "Unknown User"}</p>
+                    <p className="text-white font-medium">{userName} <span className="text-xs text-slate-500">({fb.user_email})</span></p>
                     <p className="text-xs text-slate-400">{fb.created_at ? new Date(fb.created_at).toLocaleString() : "Unknown Date"}</p>
                   </div>
                   <div className="flex items-center gap-2">
@@ -244,7 +252,7 @@ const Dashboard = () => {
                   </div>
                 )}
               </motion.div>
-            ))}
+            )})}
           </div>
         </motion.div>
       )}
