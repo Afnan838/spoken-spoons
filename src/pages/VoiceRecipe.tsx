@@ -90,8 +90,9 @@ const VoiceRecipe = () => {
     const ttsLang = LANGUAGES.find(l => l.code === langCode)?.ttsLang || "en-IN";
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = ttsLang;
-    utterance.rate = 0.95;
+    utterance.rate = 1.15;
     utterance.pitch = 1.1;
+    utterance.volume = 1;
 
     // Select a female voice for Ira
     const voices = window.speechSynthesis.getVoices();
