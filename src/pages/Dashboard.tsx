@@ -210,18 +210,25 @@ const Dashboard = () => {
       </motion.div>
 
       {/* Community Feedback List */}
-      {feedbacks.length > 0 && (
-        <motion.div
-          id="community-feedback"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          className="mb-8 scroll-mt-24"
-        >
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold text-white">Community Feedback</h2>
+      <motion.div
+        id="community-feedback"
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4 }}
+        className="mb-8 scroll-mt-24"
+      >
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-bold text-white">Community Feedback</h2>
+          <span className="text-xs text-slate-400">{feedbacks.length} {feedbacks.length === 1 ? "entry" : "entries"}</span>
+        </div>
+
+        {feedbacks.length === 0 ? (
+          <div className="card p-8 text-center border-0">
+            <MessageSquare className="h-8 w-8 text-slate-500 mx-auto mb-3" />
+            <p className="text-slate-300 font-medium">No community feedback yet</p>
+            <p className="text-sm text-slate-500 mt-1">Be the first to share your thoughts using the form above.</p>
           </div>
-          
+        ) : (
           <div className="grid gap-4 md:grid-cols-2">
             {feedbacks.map((fb, i) => {
               const fbUser = dbUsers.find(u => u.email === fb.user_email);
@@ -240,7 +247,7 @@ const Dashboard = () => {
                   </div>
                 </div>
                 <p className="text-slate-300 mb-4">{fb.message || ""}</p>
-                
+
                 {fb.voice_record_id && (
                   <div className="pt-4 border-t border-border/20 flex items-center gap-3">
                     <Button size="sm" onClick={() => handlePlayVoice(fb.voice_record_id!)} className="bg-cyan-600/20 hover:bg-cyan-600/40 text-cyan-400">
@@ -254,8 +261,8 @@ const Dashboard = () => {
               </motion.div>
             )})}
           </div>
-        </motion.div>
-      )}
+        )}
+      </motion.div>
 
       {/* Your Recipes Grid */}
       <div className="flex items-center justify-between mb-6">
