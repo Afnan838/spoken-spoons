@@ -258,12 +258,12 @@ const VoiceRecipe = () => {
       if (handsFree) {
         if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
         silenceTimerRef.current = setTimeout(() => {
-          if (finalTranscript.trim().length > 2) {
+          if (finalTranscript.trim().length > 1) {
             recognition.stop();
             setIsRecording(false);
             processWithAI(finalTranscript.trim());
           }
-        }, 1200);
+        }, 600);
       }
     };
 
