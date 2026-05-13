@@ -5,7 +5,7 @@ import { ChefHat, TrendingUp, Clock, Plus, Users, MessageSquare, Send, Star, Pla
 import SidebarLayout from "@/components/SidebarLayout";
 import { Button } from "@/components/ui/button";
 import { getRecipes, RecipeData } from "@/lib/api";
-import { getAllDBUsers, getAllDBFeedback, addDBFeedback, addDBVoiceRecord, DBFeedback, getDBVoiceRecord } from "@/lib/premium-db";
+import { getAllDBUsers, getAllDBFeedback, addDBFeedback, addDBVoiceRecord, DBFeedback, DBUser, getDBVoiceRecord } from "@/lib/premium-db";
 import { getUser } from "@/lib/auth";
 import { VoiceRecorder } from "@/components/VoiceRecorder";
 
