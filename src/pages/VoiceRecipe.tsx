@@ -91,19 +91,17 @@ const VoiceRecipe = () => {
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = ttsLang;
     utterance.rate = 1.15;
-    utterance.pitch = 1.1;
+    utterance.pitch = 0.85;
     utterance.volume = 1;
 
-    // Select a female voice for Ira
+    // Select a male voice for Ira
     const voices = window.speechSynthesis.getVoices();
-    const femaleVoice = voices.find(v =>
-      v.lang.startsWith(ttsLang.split("-")[0]) &&
-      (/female/i.test(v.name) || /woman/i.test(v.name) || /zira/i.test(v.name) || /samantha/i.test(v.name) || /google.*female/i.test(v.name))
-    ) || voices.find(v =>
-      v.lang.startsWith(ttsLang.split("-")[0]) &&
-      !(/male/i.test(v.name) && !/female/i.test(v.name))
-    );
-    if (femaleVoice) utterance.voice = femaleVoice;
+    const langPrefix = ttsLang.split("-")[0];
+    const maleVoice =
+      voices.find(v => v.lang.startsWith(langPrefix) && /male/i.test(v.name) && !/female/i.test(v.name)) ||
+      voices.find(v => v.lang.startsWith(langPrefix) && /(david|mark|daniel|alex|fred|google.*male|ravi|hemant)/i.test(v.name)) ||
+      voices.find(v => v.lang.startsWith(langPrefix));
+    if (maleVoice) utterance.voice = maleVoice;
 
     utterance.onstart = () => {
       setIsSpeaking(true);
