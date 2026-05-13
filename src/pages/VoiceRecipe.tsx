@@ -90,8 +90,9 @@ const VoiceRecipe = () => {
     const ttsLang = LANGUAGES.find(l => l.code === langCode)?.ttsLang || "en-IN";
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = ttsLang;
-    utterance.rate = 0.95;
+    utterance.rate = 1.15;
     utterance.pitch = 1.1;
+    utterance.volume = 1;
 
     // Select a female voice for Ira
     const voices = window.speechSynthesis.getVoices();
@@ -257,12 +258,12 @@ const VoiceRecipe = () => {
       if (handsFree) {
         if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
         silenceTimerRef.current = setTimeout(() => {
-          if (finalTranscript.trim().length > 2) {
+          if (finalTranscript.trim().length > 1) {
             recognition.stop();
             setIsRecording(false);
             processWithAI(finalTranscript.trim());
           }
-        }, 1200);
+        }, 600);
       }
     };
 
