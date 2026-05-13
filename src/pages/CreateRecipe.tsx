@@ -2,7 +2,7 @@ import { useState, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
-import { Eye, Save, Upload, X, Plus, Image as ImageIcon, Video, Shield } from "lucide-react";
+import { Eye, Save, Upload, X, Plus, Image as ImageIcon, Video, Shield, Zap } from "lucide-react";
 import SidebarLayout from "@/components/SidebarLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
