@@ -340,6 +340,31 @@ const VoiceRecipe = () => {
           </div>
           <div className="flex items-center gap-2">
             <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                const samples: Record<string, string> = {
+                  "en-IN": `Hi, I'm ${ASSISTANT_NAME}, your voice chef. How can I help you cook today?`,
+                  "hi-IN": `नमस्ते, मैं ${ASSISTANT_NAME} हूँ, आपकी आवाज़ रसोइया। आज क्या पकाएँ?`,
+                  "kn-IN": `ನಮಸ್ಕಾರ, ನಾನು ${ASSISTANT_NAME}, ನಿಮ್ಮ ಧ್ವನಿ ಬಾಣಸಿಗ.`,
+                  "ta-IN": `வணக்கம், நான் ${ASSISTANT_NAME}, உங்கள் குரல் சமையற்காரர்.`,
+                  "ml-IN": `നമസ്കാരം, ഞാൻ ${ASSISTANT_NAME}, നിങ്ങളുടെ ശബ്ദ പാചകക്കാരൻ.`,
+                  "te-IN": `నమస్కారం, నేను ${ASSISTANT_NAME}, మీ వాయిస్ చెఫ్.`,
+                  "bn-IN": `নমস্কার, আমি ${ASSISTANT_NAME}, আপনার ভয়েস শেফ।`,
+                  "mr-IN": `नमस्कार, मी ${ASSISTANT_NAME}, तुमचा व्हॉइस शेफ.`,
+                  "gu-IN": `નમસ્તે, હું ${ASSISTANT_NAME} છું, તમારો વોઇસ શેફ.`,
+                  "pa-IN": `ਸਤ ਸ੍ਰੀ ਅਕਾਲ, ਮੈਂ ${ASSISTANT_NAME} ਹਾਂ, ਤੁਹਾਡਾ ਆਵਾਜ਼ ਸ਼ੈੱਫ।`,
+                  "ur-IN": `السلام علیکم، میں ${ASSISTANT_NAME} ہوں، آپ کا وائس شیف۔`,
+                };
+                speak(samples[selectedLang] || samples["en-IN"], selectedLang);
+              }}
+              className="text-xs"
+              disabled={isSpeaking}
+            >
+              <Volume2 className="h-3 w-3 mr-1" />
+              Preview Voice
+            </Button>
+            <Button
               variant={handsFree ? "default" : "outline"}
               size="sm"
               onClick={() => setHandsFree(!handsFree)}
