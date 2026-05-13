@@ -70,52 +70,83 @@ const VoiceRecipe = () => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chatMessages]);
 
-  // Cleanup on unmount
+  // Cleanup on unmount + load voices reliably
   useEffect(() => {
-    // Pre-fetch voices
-    if (typeof window !== "undefined" && window.speechSynthesis) {
-      window.speechSynthesis.getVoices();
-    }
-    
+    if (typeof window === "undefined" || !window.speechSynthesis) return;
+    // Trigger voice load (some browsers populate async)
+    window.speechSynthesis.getVoices();
+    const handleVoices = () => window.speechSynthesis.getVoices();
+    window.speechSynthesis.addEventListener?.("voiceschanged", handleVoices);
+
     return () => {
       recognitionRef.current?.stop();
       window.speechSynthesis?.cancel();
+      window.speechSynthesis?.removeEventListener?.("voiceschanged", handleVoices);
       if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
     };
   }, []);
 
   const speak = useCallback((text: string, langCode: string) => {
-    if (!("speechSynthesis" in window)) return;
-    window.speechSynthesis.cancel();
+    if (!("speechSynthesis" in window)) {
+      toast.error("Your browser doesn't support voice output.");
+      return;
+    }
+    const synth = window.speechSynthesis;
+    synth.cancel();
+    // Chrome bug: speech can pause if synth is in paused state
+    synth.resume();
+
     const ttsLang = LANGUAGES.find(l => l.code === langCode)?.ttsLang || "en-IN";
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = ttsLang;
-    utterance.rate = 1.15;
-    utterance.pitch = 0.85;
-    utterance.volume = 1;
 
-    // Select a male voice for Ira
-    const voices = window.speechSynthesis.getVoices();
-    const langPrefix = ttsLang.split("-")[0];
-    const maleVoice =
-      voices.find(v => v.lang.startsWith(langPrefix) && /male/i.test(v.name) && !/female/i.test(v.name)) ||
-      voices.find(v => v.lang.startsWith(langPrefix) && /(david|mark|daniel|alex|fred|google.*male|ravi|hemant)/i.test(v.name)) ||
-      voices.find(v => v.lang.startsWith(langPrefix));
-    if (maleVoice) utterance.voice = maleVoice;
+    const doSpeak = () => {
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = ttsLang;
+      utterance.rate = 1.1;
+      utterance.pitch = 0.85;
+      utterance.volume = 1;
 
-    utterance.onstart = () => {
-      setIsSpeaking(true);
-      setStatusText(`🔊 ${ASSISTANT_NAME} is speaking...`);
+      const voices = synth.getVoices();
+      const langPrefix = ttsLang.split("-")[0];
+      const maleVoice =
+        voices.find(v => v.lang.startsWith(langPrefix) && /male/i.test(v.name) && !/female/i.test(v.name)) ||
+        voices.find(v => v.lang.startsWith(langPrefix) && /(david|mark|daniel|alex|fred|google.*male|ravi|hemant)/i.test(v.name)) ||
+        voices.find(v => v.lang.startsWith(langPrefix)) ||
+        voices.find(v => v.default);
+      if (maleVoice) utterance.voice = maleVoice;
+
+      utterance.onstart = () => {
+        setIsSpeaking(true);
+        setStatusText(`🔊 ${ASSISTANT_NAME} is speaking...`);
+      };
+      utterance.onend = () => {
+        setIsSpeaking(false);
+        setStatusText(`Tap mic to talk to ${ASSISTANT_NAME}`);
+      };
+      utterance.onerror = (e: any) => {
+        console.error("TTS error:", e);
+        setIsSpeaking(false);
+      };
+      synth.speak(utterance);
+
+      // Chrome workaround: keep synth alive on long utterances
+      const keepAlive = setInterval(() => {
+        if (!synth.speaking) {
+          clearInterval(keepAlive);
+        } else {
+          synth.pause();
+          synth.resume();
+        }
+      }, 10000);
     };
-    utterance.onend = () => {
-      setIsSpeaking(false);
-      setStatusText(`Tap mic to talk to ${ASSISTANT_NAME}`);
-    };
-    utterance.onerror = () => {
-      setIsSpeaking(false);
-    };
-    speechSynthesis.speak(utterance);
+
+    // If voices haven't loaded yet, wait briefly
+    if (synth.getVoices().length === 0) {
+      setTimeout(doSpeak, 200);
+    } else {
+      doSpeak();
+    }
   }, []);
+
 
   const speakRecipe = useCallback((recipeData: Partial<RecipeData>, langCode: string) => {
     const text = `${recipeData.title}. ${recipeData.description || ""} ${recipeData.ingredients?.join(", ")}. ${recipeData.steps?.map((s, i) => `${i + 1}. ${s}`).join(". ")}`;
